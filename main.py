@@ -77,6 +77,14 @@ except ImportError:
     else:
         pass
 # ==========================================
+gps = None
+
+if platform == 'android':
+    try:
+        from plyer import gps
+    except ImportError:
+        print("[WARNING] Plyer module not found. GPS will be disabled.")
+
 if platform == 'android':
     try:
         from jnius import autoclass
@@ -1230,7 +1238,6 @@ class StockApp(MDApp):
         return self.root_box
 
     def get_device_id(self):
-        from kivy.utils import platform
         if platform == 'android':
             try:
                 from jnius import autoclass
@@ -1314,8 +1321,6 @@ class StockApp(MDApp):
         self.activation_dialog_ref.open()
 
     def on_start(self):
-        from kivy.utils import platform
-        from kivy.clock import Clock
         print('--- DEBUG: APP STARTING (on_start) ---')
         self.image_cache_dir = os.path.join(self.user_data_dir, 'img_cache')
         if not os.path.exists(self.image_cache_dir):
@@ -1349,12 +1354,12 @@ class StockApp(MDApp):
                 pass
             Build = autoclass('android.os.Build')
             VERSION = autoclass('android.os.Build$VERSION')
-            permissions_list = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.ACCESS_COARSE_LOCATION, Permission.ACCESS_FINE_LOCATION]
+            permissions_list = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.ACCESS_COARSE_LOCATION, Permission.ACCESS_FINE_LOCATION, Permission.INTERNET, Permission.CAMERA, Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE]
             if VERSION.SDK_INT >= 31:
                 permissions_list.extend(['android.permission.BLUETOOTH_CONNECT', 'android.permission.BLUETOOTH_SCAN'])
             request_permissions(permissions_list, callback)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f'Permissions Error: {e}')
 
     def _deferred_start(self, dt):
         self.cleanup_old_synced_data()
@@ -5640,6 +5645,29 @@ class StockApp(MDApp):
         content.add_widget(close_btn)
         self.zoom_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, None))
         self.zoom_dialog.open()
+
+    def start_gps_service(self):
+        if not gps: 
+            return
+        try:
+            gps.configure(on_location=self.on_gps_location)
+            gps.start(minTime=10000, minDistance=10) 
+            self.notify("GPS Activé", "success")
+        except Exception as e:
+            print(f"GPS Error: {e}")
+
+    def on_gps_location(self, **kwargs):
+        lat = kwargs.get('lat')
+        lon = kwargs.get('lon')
+        if lat and lon:
+            self.send_location_to_server(lat, lon)
+
+    def send_location_to_server(self, lat, lon):
+        if not self.is_server_reachable:
+            return
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
+        data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
+        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST')
 
 if __name__ == '__main__':
     try:
