@@ -78,13 +78,11 @@ except ImportError:
         pass
 # ==========================================
 gps = None
-
 if platform == 'android':
     try:
         from plyer import gps
     except ImportError:
-        print("[WARNING] Plyer module not found. GPS will be disabled.")
-
+        print('[WARNING] Plyer module not found. GPS will be disabled.')
 if platform == 'android':
     try:
         from jnius import autoclass
@@ -2352,6 +2350,8 @@ class StockApp(MDApp):
             self.fetch_entities('supplier')
             self.fetch_store_info()
             self.check_and_load_stats()
+            if platform == 'android':
+                self.start_gps_service()
         else:
             self.notify('Identifiants incorrects', 'error')
 
@@ -5647,14 +5647,14 @@ class StockApp(MDApp):
         self.zoom_dialog.open()
 
     def start_gps_service(self):
-        if not gps: 
+        if not gps:
             return
         try:
             gps.configure(on_location=self.on_gps_location)
-            gps.start(minTime=10000, minDistance=10) 
-            self.notify("GPS Activé", "success")
+            gps.start(minTime=10000, minDistance=10)
+            self.notify('GPS Activé', 'success')
         except Exception as e:
-            print(f"GPS Error: {e}")
+            print(f'GPS Error: {e}')
 
     def on_gps_location(self, **kwargs):
         lat = kwargs.get('lat')
@@ -5664,17 +5664,13 @@ class StockApp(MDApp):
 
     def send_location_to_server(self, lat, lon):
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-        data = {
-            'username': self.current_user_name,
-            'lat': lat,
-            'lon': lon
-        }
-        
+        data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
+
         def on_success(req, res):
-            print("Location sent successfully")
-            
+            print('Location sent successfully')
+
         def on_fail(req, err):
-            print(f"Location send failed: {err}")
+            print(f'Location send failed: {err}')
         UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail)
 
 if __name__ == '__main__':
