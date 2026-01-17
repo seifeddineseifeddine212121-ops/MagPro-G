@@ -5663,11 +5663,19 @@ class StockApp(MDApp):
             self.send_location_to_server(lat, lon)
 
     def send_location_to_server(self, lat, lon):
-        if not self.is_server_reachable:
-            return
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-        data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST')
+        data = {
+            'username': self.current_user_name,
+            'lat': lat,
+            'lon': lon
+        }
+        
+        def on_success(req, res):
+            print("Location sent successfully")
+            
+        def on_fail(req, err):
+            print(f"Location send failed: {err}")
+        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail)
 
 if __name__ == '__main__':
     try:
