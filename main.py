@@ -33,6 +33,7 @@ from kivy.metrics import dp
 from kivy.network.urlrequest import UrlRequest
 from kivy.properties import StringProperty, NumericProperty, ObjectProperty, ListProperty, BooleanProperty, ColorProperty
 from kivy.storage.jsonstore import JsonStore
+from kivy.uix.behaviors import ButtonBehavior as KivyButtonBehavior
 from kivy.uix.camera import Camera
 from kivy.uix.modalview import ModalView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
@@ -45,6 +46,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFillRoundFlatButton, MDFlatButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.fitimage import FitImage
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel, MDIcon
@@ -116,7 +118,7 @@ reshaper = arabic_reshaper.ArabicReshaper(configuration={'delete_harakat': True,
 # ==========================================
 DEFAULT_PORT = '5000'
 # ==========================================
-KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        MDIcon:\n            icon: root.icon_name\n            theme_text_color: "Custom"\n            text_color: root.icon_color\n            size_hint_x: None\n            width: dp(40)\n            pos_hint: {\'center_y\': .5}\n            font_size: \'32sp\'\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
+KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
 # ==========================================
 class CartRecycleItem(RecycleDataViewBehavior, MDCard):
     text_name = StringProperty('')
@@ -212,24 +214,31 @@ class LeftButtonsContainer(ILeftBody, MDBoxLayout):
 class RightButtonsContainer(IRightBodyTouch, MDBoxLayout):
     adaptive_width = True
 
+class ClickableBox(KivyButtonBehavior, MDBoxLayout):
+    pass
+
 class ProductRecycleItem(RecycleDataViewBehavior, MDBoxLayout):
     index = None
     text_name = StringProperty('')
+    text_category = StringProperty('')
     text_price = StringProperty('')
     text_stock = StringProperty('')
     icon_name = StringProperty('package-variant')
     icon_color = ListProperty([0, 0, 0, 1])
     price_color = ListProperty([0, 0, 0, 1])
+    image_source = StringProperty('')
     product_data = ObjectProperty(None)
 
     def refresh_view_attrs(self, rv, index, data):
         self.index = index
         self.text_name = data.get('name', '')
+        self.text_category = data.get('category', '')
         self.text_price = data.get('price_text', '')
         self.text_stock = data.get('stock_text', '')
         self.icon_name = data.get('icon', 'package-variant')
         self.icon_color = data.get('icon_color', [0, 0, 0, 1])
         self.price_color = data.get('price_color', [0, 0, 0, 1])
+        self.image_source = data.get('image_url', '')
         self.product_data = data.get('raw_data')
         return super().refresh_view_attrs(rv, index, data)
 
@@ -237,6 +246,11 @@ class ProductRecycleItem(RecycleDataViewBehavior, MDBoxLayout):
         app = MDApp.get_running_app()
         if self.product_data:
             app.open_add_to_cart_dialog(self.product_data, app.current_mode)
+
+    def on_image_tap(self):
+        if self.image_source:
+            app = MDApp.get_running_app()
+            app.show_zoomed_image(self.image_source, self.text_name)
 
 class HistoryRecycleItem(RecycleDataViewBehavior, MDCard):
     index = None
@@ -480,12 +494,89 @@ class StockApp(MDApp):
         batch = self.current_product_list_source[start:end]
         threading.Thread(target=self._process_batch_data, args=(batch, reset), daemon=True).start()
 
+    def get_cached_image_url(self, image_path_from_server):
+        if not image_path_from_server:
+            return ''
+        filename = os.path.basename(image_path_from_server.replace('\\', '/'))
+        local_path = os.path.join(self.image_cache_dir, filename)
+        if os.path.exists(local_path):
+            return local_path
+        base_url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/images/'
+        import urllib.parse
+        clean_path = image_path_from_server.replace('\\', '/')
+        encoded_path = urllib.parse.quote(clean_path)
+        server_url = f'{base_url}{encoded_path}'
+        self._cache_image_background(server_url, local_path)
+        return server_url
+
+    def _cache_image_background(self, url, local_path):
+
+        def on_success(req, result):
+            try:
+                with open(local_path, 'wb') as f:
+                    f.write(result)
+            except:
+                pass
+        UrlRequest(url, on_success=on_success)
+
+    def open_image_selector(self, instance):
+        if platform == 'android':
+            from android.permissions import request_permissions, Permission
+
+            def on_perm(permissions, grants):
+                if grants and grants[0]:
+                    self._open_file_chooser()
+                else:
+                    self.notify('Permission refusée', 'error')
+            request_permissions([Permission.READ_EXTERNAL_STORAGE], on_perm)
+        else:
+            self._open_file_chooser()
+
+    def _open_file_chooser(self):
+        try:
+            if platform == 'android':
+                from plyer import filechooser
+                filechooser.open_file(on_selection=self._on_image_selected, filters=['*.png', '*.jpg', '*.jpeg'])
+            else:
+                try:
+                    from plyer import filechooser
+                    filechooser.open_file(on_selection=self._on_image_selected, filters=['*.png', '*.jpg', '*.jpeg'])
+                except:
+                    self.notify('Sélecteur de fichiers non supporté sur ce système', 'error')
+        except Exception as e:
+            self.notify(f'Erreur sélecteur: {e}', 'error')
+
+    def _on_image_selected(self, selection):
+        if not selection:
+            return
+        try:
+            image_path = selection[0]
+            ext = os.path.splitext(image_path)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                self.notify('Format non supporté', 'error')
+                return
+            self.temp_selected_image_path = image_path
+            self.remove_image_order = False
+            if hasattr(self, 'lbl_image_status'):
+                self.lbl_image_status.text = f'Image: {os.path.basename(image_path)}'
+                self.lbl_image_status.text_color = (0, 0.6, 0, 1)
+            self.notify('Image sélectionnée', 'success')
+        except Exception as e:
+            self.notify(f'Erreur image: {e}', 'error')
+
     def _process_batch_data(self, batch, reset=False):
         rv_data = []
         is_sale = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
         for p in batch:
             try:
                 name = self.fix_text(str(p.get('name', '')))
+                raw_cat = str(p.get('category', ''))
+                if raw_cat.lower() == 'none':
+                    category = ''
+                else:
+                    category = self.fix_text(raw_cat)
+                image_path_raw = p.get('image', '')
+                final_image_source = self.get_cached_image_url(image_path_raw)
                 if is_sale:
                     price = float(p.get('price', 0) or 0)
                     p_color = [0, 0.6, 0, 1] if not p.get('has_promo') else [0.5, 0, 0.5, 1]
@@ -494,8 +585,9 @@ class StockApp(MDApp):
                     p_color = [0.9, 0.5, 0, 1]
                 stock = float(p.get('stock', 0) or 0) + float(p.get('stock_warehouse', 0) or 0)
                 stock_text = 'Illimité' if stock <= -900000 else f'Qté: {(int(stock) if stock.is_integer() else stock)}'
-                rv_data.append({'text_name': name, 'text_price': f'{price:.2f} DA', 'text_stock': stock_text, 'icon_name': 'package-variant' if stock > 0 or stock <= -900000 else 'package-variant-closed', 'icon_color': [0, 0.6, 0, 1] if stock > 0 else [0.8, 0, 0, 1], 'price_color': p_color, 'raw_data': p})
-            except:
+                rv_data.append({'text_name': name, 'text_category': category, 'text_price': f'{price:.2f} DA', 'text_stock': stock_text, 'icon_name': 'package-variant' if stock > 0 or stock <= -900000 else 'package-variant-closed', 'icon_color': [0, 0.6, 0, 1] if stock > 0 else [0.8, 0, 0, 1], 'price_color': p_color, 'image_url': final_image_source, 'raw_data': p})
+            except Exception as e:
+                print(f'Error processing item: {e}')
                 continue
         self._append_to_rv(rv_data, reset)
 
@@ -1117,8 +1209,6 @@ class StockApp(MDApp):
         self.cache_store = load_safe_store('stock_cache.json')
         self.stats_store = load_safe_store('local_stats.json')
         self.store = load_safe_store('app_settings.json')
-        log_path = os.path.join(self.data_dir, 'magpro.log')
-        logging.basicConfig(filename=log_path, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s', force=True)
         if self.store.exists('config'):
             conf = self.store.get('config')
             self.local_server_ip = conf.get('ip', '192.168.1.100')
@@ -1227,6 +1317,13 @@ class StockApp(MDApp):
         from kivy.utils import platform
         from kivy.clock import Clock
         print('--- DEBUG: APP STARTING (on_start) ---')
+        self.image_cache_dir = os.path.join(self.user_data_dir, 'img_cache')
+        if not os.path.exists(self.image_cache_dir):
+            try:
+                os.makedirs(self.image_cache_dir)
+                print(f'Created image cache dir: {self.image_cache_dir}')
+            except Exception as e:
+                print(f'Error creating cache dir: {e}')
         if platform == 'android':
             self.request_android_permissions()
             try:
@@ -1725,6 +1822,7 @@ class StockApp(MDApp):
 
     def open_entity_manager(self, entity_type):
         self.current_entity_type_mgmt = entity_type
+        self.current_entity_sort = 'name'
         title_text = 'Gestion Clients' if entity_type == 'account' else 'Gestion Fournisseurs'
         if self.is_server_reachable:
             self.fetch_entities(entity_type)
@@ -1736,10 +1834,14 @@ class StockApp(MDApp):
                     self.all_clients = data
                 else:
                     self.all_suppliers = data
-        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(600))
-        self.entity_search = SmartTextField(hint_text='Rechercher...', icon_right='magnify')
+        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(600), spacing=dp(5))
+        search_layout = MDBoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(55))
+        self.entity_search = SmartTextField(hint_text='Rechercher...', icon_right='magnify', size_hint_x=0.85)
         self.entity_search.bind(text=lambda instance, text: self.filter_entities_for_manager(text))
-        content.add_widget(self.entity_search)
+        self.btn_sort_entity = MDIconButton(icon='sort-alphabetical-variant', theme_text_color='Custom', text_color=(0.2, 0.2, 0.2, 1), md_bg_color=(0.95, 0.95, 0.95, 1), size_hint=(None, None), size=(dp(48), dp(48)), pos_hint={'center_y': 0.5}, on_release=self.toggle_entity_sort)
+        search_layout.add_widget(self.entity_search)
+        search_layout.add_widget(self.btn_sort_entity)
+        content.add_widget(search_layout)
         self.rv_mgmt_entity = MgmtEntityRecycleView()
         content.add_widget(self.rv_mgmt_entity)
         btn_add = MDFillRoundFlatButton(text='AJOUTER NOUVEAU', size_hint_x=1, md_bg_color=(0, 0.7, 0, 1), on_release=lambda x: self.show_add_edit_entity_dialog(None))
@@ -1748,6 +1850,22 @@ class StockApp(MDApp):
         self.mgmt_dialog.open()
         source = self.all_clients if entity_type == 'account' else self.all_suppliers
         self.populate_entity_manager_list(source)
+
+    def toggle_entity_sort(self, instance):
+        if not hasattr(self, 'current_entity_sort'):
+            self.current_entity_sort = 'name'
+        if self.current_entity_sort == 'name':
+            self.current_entity_sort = 'balance'
+            instance.icon = 'sort-numeric-descending'
+            instance.md_bg_color = (0.8, 0.9, 1, 1)
+            self.notify('Tri: Par Solde (Décroissant)', 'info')
+        else:
+            self.current_entity_sort = 'name'
+            instance.icon = 'sort-alphabetical-variant'
+            instance.md_bg_color = (0.95, 0.95, 0.95, 1)
+            self.notify('Tri: Alphabétique (A-Z)', 'info')
+        current_text = self.entity_search.text if hasattr(self, 'entity_search') else ''
+        self.filter_entities_for_manager(current_text)
 
     def filter_entities_for_manager(self, text_arg):
         query = ''
@@ -1782,7 +1900,11 @@ class StockApp(MDApp):
     @mainthread
     def populate_entity_manager_list(self, entities):
         server_default_names = ['Comptoir', 'Fournisseur', 'زبون افتراضي', 'مورد افتراضي']
-        sorted_entities = sorted(entities, key=lambda x: x.get('name', '').lower())
+        sort_mode = getattr(self, 'current_entity_sort', 'name')
+        if sort_mode == 'balance':
+            sorted_entities = sorted(entities, key=lambda x: float(x.get('balance', 0)), reverse=True)
+        else:
+            sorted_entities = sorted(entities, key=lambda x: x.get('name', '').lower())
         rv_data = []
         for e in sorted_entities:
             name = e.get('name', '')
@@ -1808,23 +1930,50 @@ class StockApp(MDApp):
     def open_entity_edit_menu(self, entity):
         self.mgmt_selected_entity = entity
         title_text = self.fix_text(entity['name'])
-        content = MDBoxLayout(orientation='vertical', spacing=10, size_hint_y=None, height=dp(130))
-        btn_edit = MDRaisedButton(text='Modifier Informations', size_hint_x=1, md_bg_color=(0.2, 0.2, 0.2, 1), on_release=lambda x: [self.options_dialog.dismiss(), self.show_add_edit_entity_dialog(entity)])
-        content.add_widget(btn_edit)
-        btn_del = MDFlatButton(text='Supprimer ce compte', theme_text_color='Error', size_hint_x=1, on_release=lambda x: self.confirm_delete_entity(entity))
-        content.add_widget(btn_del)
-        self.options_dialog = MDDialog(title=title_text, type='custom', content_cls=content)
+        from kivymd.uix.button import MDFillRoundFlatIconButton, MDRoundFlatIconButton
+        from kivymd.uix.card import MDSeparator
+        content = MDBoxLayout(orientation='vertical', spacing=dp(10), size_hint_y=None, height=dp(160), padding=[dp(15), 0, dp(15), dp(10)])
+        gps_data = entity.get('gps_location', '')
+        map_bg_color = (0.1, 0.7, 0.3, 1) if gps_data else (0.8, 0.8, 0.8, 1)
+        btn_map = MDFillRoundFlatIconButton(text='Localiser (Maps)', icon='google-maps', size_hint_x=1, height=dp(50), md_bg_color=map_bg_color, theme_text_color='Custom', text_color=(1, 1, 1, 1), icon_color=(1, 1, 1, 1), font_size='17sp', on_release=lambda x: [self.options_dialog.dismiss(), self.open_client_location(gps_data)])
+        content.add_widget(btn_map)
+        content.add_widget(MDSeparator(height=dp(1), color=(0.9, 0.9, 0.9, 1)))
+        actions_row = MDBoxLayout(orientation='horizontal', spacing=dp(10), size_hint_y=None, height=dp(50))
+        btn_edit = MDFillRoundFlatIconButton(text='Modifier', icon='pencil', size_hint_x=0.5, height=dp(48), md_bg_color=(0.15, 0.45, 0.8, 1), theme_text_color='Custom', text_color=(1, 1, 1, 1), icon_color=(1, 1, 1, 1), font_size='16sp', on_release=lambda x: [self.options_dialog.dismiss(), self.show_add_edit_entity_dialog(entity)])
+        btn_del = MDRoundFlatIconButton(text='Supprimer', icon='delete', size_hint_x=0.5, height=dp(48), theme_text_color='Custom', text_color=(0.85, 0.1, 0.1, 1), icon_color=(0.85, 0.1, 0.1, 1), line_color=(0.85, 0.1, 0.1, 1), font_size='16sp', on_release=lambda x: self.confirm_delete_entity(entity))
+        actions_row.add_widget(btn_edit)
+        actions_row.add_widget(btn_del)
+        content.add_widget(actions_row)
+        self.options_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.95, None), radius=[16, 16, 16, 16])
         self.options_dialog.open()
+
+    def open_client_location(self, location_data):
+        if not location_data:
+            self.notify('Aucune position GPS enregistrée', 'error')
+            return
+        loc = str(location_data).strip()
+        if not loc:
+            return
+        import webbrowser
+        from urllib.parse import quote
+        if 'http' in loc or 'waze' in loc or 'geo:' in loc:
+            url = loc
+        else:
+            url = f'https://www.google.com/maps/search/?api=1&query={quote(loc)}'
+        try:
+            webbrowser.open(url)
+            self.notify('Ouverture de Google Maps...', 'info')
+        except Exception as e:
+            self.notify(f'Erreur: {e}', 'error')
 
     def show_add_edit_entity_dialog(self, entity=None):
         if not self.is_server_reachable:
             self.ae_dialog = MDDialog(title='Hors Ligne', text='Modification des tiers impossible en mode hors ligne.\nVeuillez vous connecter au serveur.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.ae_dialog.dismiss())])
             self.ae_dialog.open()
             return
+        from kivy.core.clipboard import Clipboard
         is_edit = entity is not None
         title = 'Modifier Fiche' if is_edit else 'Ajouter Nouveau'
-        scroll_container = MDScrollView(size_hint_y=None, height=dp(450))
-        content = MDBoxLayout(orientation='vertical', spacing=15, adaptive_height=True, padding=[0, 10, 0, 20])
         val_name = entity.get('name', '') if is_edit else ''
         val_phone = entity.get('phone', '') if is_edit else ''
         val_address = entity.get('address', '') if is_edit else ''
@@ -1834,6 +1983,7 @@ class StockApp(MDApp):
         val_nif = entity.get('nif', '') if is_edit else ''
         val_nis = entity.get('nis', '') if is_edit else ''
         val_nai = entity.get('nai', '') if is_edit else ''
+        val_gps = entity.get('gps_location', '') if is_edit else ''
         raw_cat = str(entity.get('price_category', '')).strip() if is_edit else ''
         if raw_cat in ['Gros', 'جملة']:
             display_cat = 'Gros'
@@ -1841,12 +1991,39 @@ class StockApp(MDApp):
             display_cat = 'Demi-Gros'
         else:
             display_cat = 'Détail'
-        f_name = SmartTextField(text=val_name, hint_text='Nom Complet *', required=True)
-        f_phone = SmartTextField(text=val_phone, hint_text='Téléphone', input_filter='int')
-        f_address = SmartTextField(text=val_address, hint_text='Adresse')
-        f_activity = SmartTextField(text=val_activity, hint_text='Activité')
-        f_email = SmartTextField(text=val_email, hint_text='Email')
-        f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True)
+        scroll = MDScrollView(size_hint_y=None, height=dp(600))
+        main_box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15), padding=[dp(10), dp(10), dp(10), dp(20)])
+        card_info = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.99, 0.99, 0.99, 1))
+        header_info = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
+        header_info.add_widget(MDIcon(icon='account-box-outline', theme_text_color='Primary', font_size='22sp'))
+        header_info.add_widget(MDLabel(text='Identité', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
+        card_info.add_widget(header_info)
+        card_info.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        f_name = SmartTextField(text=val_name, hint_text='Nom Complet / Raison Sociale *', required=True, icon_right='account')
+        f_activity = SmartTextField(text=val_activity, hint_text='Activité', icon_right='briefcase')
+        card_info.add_widget(f_name)
+        card_info.add_widget(f_activity)
+        main_box.add_widget(card_info)
+        card_contact = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.96, 0.98, 1, 1))
+        header_contact = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
+        header_contact.add_widget(MDIcon(icon='card-account-phone-outline', theme_text_color='Primary', font_size='22sp'))
+        header_contact.add_widget(MDLabel(text='Coordonnées', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
+        card_contact.add_widget(header_contact)
+        card_contact.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        f_phone = SmartTextField(text=val_phone, hint_text='Téléphone', input_filter='int', icon_right='phone')
+        f_address = SmartTextField(text=val_address, hint_text='Adresse', icon_right='map-marker')
+        f_email = SmartTextField(text=val_email, hint_text='Email', icon_right='email')
+        box_gps = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
+        f_gps = SmartTextField(text=val_gps, hint_text='Position GPS (Maps)', icon_right='google-maps', size_hint_x=0.85)
+        btn_paste_gps = MDIconButton(icon='content-paste', theme_text_color='Custom', text_color=self.theme_cls.primary_color, pos_hint={'center_y': 0.5}, on_release=lambda x: setattr(f_gps, 'text', Clipboard.paste()))
+        box_gps.add_widget(f_gps)
+        box_gps.add_widget(btn_paste_gps)
+        card_contact.add_widget(f_phone)
+        card_contact.add_widget(f_address)
+        card_contact.add_widget(box_gps)
+        card_contact.add_widget(f_email)
+        main_box.add_widget(card_contact)
+        f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True, icon_right='tag')
 
         def on_cat_touch(instance, touch):
             if instance.collide_point(*touch.pos):
@@ -1854,27 +2031,37 @@ class StockApp(MDApp):
                 return True
             return False
         f_price_cat.bind(on_touch_down=on_cat_touch)
-        f_rc = SmartTextField(text=val_rc, hint_text='N° Registre Commerce (RC)')
-        f_nif = SmartTextField(text=val_nif, hint_text='N.I.F')
-        f_nis = SmartTextField(text=val_nis, hint_text='N.I.S')
-        f_nai = SmartTextField(text=val_nai, hint_text='N.A.I')
-        content.add_widget(f_name)
-        content.add_widget(f_phone)
-        content.add_widget(f_address)
-        content.add_widget(f_activity)
         if self.current_entity_type_mgmt == 'account':
-            content.add_widget(f_price_cat)
-        content.add_widget(f_email)
-        content.add_widget(f_rc)
-        content.add_widget(f_nif)
-        content.add_widget(f_nis)
-        content.add_widget(f_nai)
-        scroll_container.add_widget(content)
+            card_comm = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(1, 0.98, 0.96, 1))
+            header_comm = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
+            header_comm.add_widget(MDIcon(icon='store-cog-outline', theme_text_color='Primary', font_size='22sp'))
+            header_comm.add_widget(MDLabel(text='Commercial', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
+            card_comm.add_widget(header_comm)
+            card_comm.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+            card_comm.add_widget(f_price_cat)
+            main_box.add_widget(card_comm)
+        card_fisc = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.95, 0.95, 0.95, 1))
+        header_fisc = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
+        header_fisc.add_widget(MDIcon(icon='file-document-multiple-outline', theme_text_color='Primary', font_size='22sp'))
+        header_fisc.add_widget(MDLabel(text='Information Fiscale', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
+        card_fisc.add_widget(header_fisc)
+        card_fisc.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        f_rc = SmartTextField(text=val_rc, hint_text='N° Registre Commerce (RC)')
+        f_nif = SmartTextField(text=val_nif, hint_text='N.I.F (Identifiant Fiscal)')
+        f_nis = SmartTextField(text=val_nis, hint_text='N.I.S (Statistique)')
+        f_nai = SmartTextField(text=val_nai, hint_text='N.A.I (Article)')
+        card_fisc.add_widget(f_rc)
+        card_fisc.add_widget(f_nif)
+        card_fisc.add_widget(f_nis)
+        card_fisc.add_widget(f_nai)
+        main_box.add_widget(card_fisc)
+        footer_box = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(10), 0, 0])
 
         def save(x):
             name_val = f_name.get_value().strip()
             if not name_val:
                 f_name.error = True
+                self.notify('Le nom est obligatoire', 'error')
                 return
             cat_ar = 'تجزئة'
             if self.current_entity_type_mgmt == 'account':
@@ -1885,12 +2072,18 @@ class StockApp(MDApp):
                     cat_ar = 'نصف جملة'
                 else:
                     cat_ar = 'تجزئة'
-            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
+            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'gps_location': f_gps.get_value().strip(), 'id': entity.get('id') if is_edit else None}
             if self.is_server_reachable:
                 UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Enregistré avec succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
             else:
                 self.notify('Impossible: Mode Hors Ligne', 'error')
-        self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll_container, buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: self.ae_dialog.dismiss()), MDRaisedButton(text='ENREGISTRER', on_release=save)])
+        btn_save = MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=1, height=dp(50), elevation=2, on_release=save)
+        btn_cancel = MDRaisedButton(text='ANNULER', md_bg_color=(0.9, 0.9, 0.9, 1), text_color=(0.3, 0.3, 0.3, 1), size_hint_x=1, height=dp(50), elevation=0, on_release=lambda x: self.ae_dialog.dismiss())
+        footer_box.add_widget(btn_save)
+        footer_box.add_widget(btn_cancel)
+        main_box.add_widget(footer_box)
+        scroll.add_widget(main_box)
+        self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll, buttons=[], size_hint=(0.98, 0.96))
         self.ae_dialog.open()
 
     def show_price_cat_selector(self, text_field_instance):
@@ -2027,6 +2220,7 @@ class StockApp(MDApp):
             self.is_offline_mode = False
             self.notify(f"Connexion OK ({('Local' if self.active_server_ip == self.local_server_ip else 'Ext')})", 'success')
             self.fetch_products()
+            self.fetch_categories()
             self.fetch_entities('account')
             self.fetch_entities('supplier')
             self.fetch_store_info()
@@ -2253,29 +2447,96 @@ class StockApp(MDApp):
 
     def _build_products_screen(self):
         screen = MDScreen(name='products')
-        layout = MDBoxLayout(orientation='vertical')
-        self.prod_toolbar = MDTopAppBar(title='Produits', left_action_items=[['arrow-left', lambda x: self.go_back()]])
-        layout.add_widget(self.prod_toolbar)
-        self.prod_search_layout = MDBoxLayout(padding=(10, 5), spacing=dp(5), size_hint_y=None, height=dp(60))
-        self.btn_scan_prod = MDIconButton(icon='barcode-scan', theme_text_color='Custom', text_color=(0, 0, 0, 1), pos_hint={'center_y': 0.5}, icon_size='32sp', on_release=self.open_barcode_scanner)
-        self.prod_search_layout.add_widget(self.btn_scan_prod)
-        self.search_field = SmartTextField(hint_text='Rechercher (Nom/Codebar)...', mode='rectangle', icon_right='magnify')
-        self.search_field.bind(text=self.filter_products)
-        self.btn_add_prod = MDIconButton(icon='plus', theme_text_color='Custom', text_color=(0, 0.7, 0, 1), pos_hint={'center_y': 0.5}, icon_size='36sp', on_release=lambda x: self.show_manage_product_dialog(None))
-        self.prod_search_layout.add_widget(self.search_field)
-        layout.add_widget(self.prod_search_layout)
+        root_layout = MDFloatLayout()
         self.rv_products = ProductRecycleView()
-        layout.add_widget(self.rv_products)
-        self.cart_bar = MDCard(size_hint_y=None, height=dp(60), padding=[dp(15), dp(5)], md_bg_color=self.theme_cls.primary_color, radius=[10, 10, 0, 0], ripple_behavior=True, on_release=self.open_cart_screen, elevation=2)
+        self.rv_products.size_hint = (1, 1)
+        self.rv_products.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+
+        def set_rv_padding(dt):
+            if hasattr(self.rv_products, 'layout_manager') and self.rv_products.layout_manager:
+                self.rv_products.layout_manager.padding = [dp(5), dp(220), dp(5), dp(70)]
+        Clock.schedule_once(set_rv_padding, 0.1)
+        root_layout.add_widget(self.rv_products)
+        header_container = MDBoxLayout(orientation='vertical', adaptive_height=True, md_bg_color=(1, 1, 1, 1))
+        header_container.pos_hint = {'top': 1}
+        self.prod_toolbar = MDTopAppBar(title='Produits', left_action_items=[['arrow-left', lambda x: self.go_back()]], elevation=2)
+        header_container.add_widget(self.prod_toolbar)
+        self.prod_search_layout = MDBoxLayout(orientation='horizontal', padding=[dp(10), dp(5), dp(10), dp(0)], spacing=dp(5), size_hint_y=None, height=dp(55), md_bg_color=(1, 1, 1, 1))
+        self.search_field = SmartTextField(hint_text='Rechercher...', mode='rectangle', icon_right='magnify', size_hint_y=None, height=dp(40), pos_hint={'center_y': 0.5}, size_hint_x=1)
+        self.search_field.bind(text=self.filter_products)
+        self.prod_search_layout.add_widget(self.search_field)
+        self.btn_scan_prod = MDIconButton(icon='barcode-scan', theme_text_color='Custom', text_color=(0.2, 0.2, 0.2, 1), pos_hint={'center_y': 0.5}, icon_size='28sp', on_release=self.open_barcode_scanner)
+        self.prod_search_layout.add_widget(self.btn_scan_prod)
+        self.btn_add_prod = MDIconButton(icon='plus-circle', theme_text_color='Custom', text_color=(0, 0.7, 0, 1), pos_hint={'center_y': 0.5}, icon_size='36sp', on_release=lambda x: self.show_manage_product_dialog(None))
+        self.prod_search_layout.add_widget(self.btn_add_prod)
+        header_container.add_widget(self.prod_search_layout)
+        header_container.add_widget(MDBoxLayout(size_hint_y=None, height=dp(5)))
+        self.selected_family_filter = 'TOUS'
+        filter_box = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(50), padding=[dp(10), 0, dp(10), dp(5)])
+        family_filter_card = MDCard(size_hint=(1, 1), radius=[5], md_bg_color=(0.96, 0.96, 0.96, 1), line_color=(0.6, 0.6, 0.6, 1), line_width=1, elevation=0, ripple_behavior=True, on_release=self.open_filter_menu)
+        card_content = MDBoxLayout(orientation='horizontal', padding=[dp(15), 0])
+        self.btn_main_family_filter = MDLabel(text='TOUS', theme_text_color='Custom', text_color=(0.15, 0.15, 0.15, 1), font_style='Subtitle1', bold=True, halign='left', valign='center')
+        arrow_icon = MDIcon(icon='menu-down', pos_hint={'center_y': 0.5}, theme_text_color='Secondary')
+        card_content.add_widget(self.btn_main_family_filter)
+        card_content.add_widget(arrow_icon)
+        family_filter_card.add_widget(card_content)
+        filter_box.add_widget(family_filter_card)
+        header_container.add_widget(filter_box)
+        from kivymd.uix.card import MDSeparator
+        header_container.add_widget(MDSeparator(height=dp(1), color=(0.9, 0.9, 0.9, 1)))
+        root_layout.add_widget(header_container)
+        self.cart_bar = MDCard(size_hint_y=None, height=dp(60), padding=[dp(15), dp(5)], md_bg_color=self.theme_cls.primary_color, radius=[15, 15, 0, 0], ripple_behavior=True, on_release=self.open_cart_screen, elevation=4, pos_hint={'bottom': 1})
         cart_box = MDBoxLayout(orientation='horizontal')
-        self.lbl_cart_count = MDLabel(text='PANIER (0)', theme_text_color='Custom', text_color=(1, 1, 1, 1), bold=True, halign='left', size_hint_x=0.5)
+        self.lbl_cart_count = MDLabel(text='PANIER (0)', theme_text_color='Custom', text_color=(1, 1, 1, 1), bold=True, halign='left', size_hint_x=0.5, font_style='Subtitle1')
         self.lbl_cart_total = MDLabel(text='0.00 DA', theme_text_color='Custom', text_color=(1, 1, 1, 1), bold=True, halign='right', font_style='H6', size_hint_x=0.5)
         cart_box.add_widget(self.lbl_cart_count)
         cart_box.add_widget(self.lbl_cart_total)
         self.cart_bar.add_widget(cart_box)
-        layout.add_widget(self.cart_bar)
-        screen.add_widget(layout)
+        root_layout.add_widget(self.cart_bar)
+        screen.add_widget(root_layout)
         return screen
+
+    def open_filter_menu(self, instance):
+        if not hasattr(self, 'all_categories') or not self.all_categories:
+            self.all_categories = ['Tout']
+            self.fetch_categories()
+        full_list = self.all_categories
+        if 'Tout' not in full_list:
+            full_list.insert(0, 'Tout')
+        content = MDBoxLayout(orientation='vertical', size_hint_y=None, adaptive_height=True, padding=dp(0))
+        scroll = MDScrollView(size_hint_y=None, height=dp(300))
+        list_layout = MDBoxLayout(orientation='vertical', adaptive_height=True)
+        for fam in full_list:
+            btn = MDFlatButton(text=fam, theme_text_color='Custom', text_color=(0.2, 0.2, 0.2, 1), font_style='Subtitle1', size_hint_x=1, height=dp(50))
+            btn.bind(on_release=lambda x, f=fam: self.apply_filter(f))
+            list_layout.add_widget(btn)
+            from kivymd.uix.card import MDSeparator
+            list_layout.add_widget(MDSeparator(height=dp(1), color=(0.9, 0.9, 0.9, 1)))
+        scroll.add_widget(list_layout)
+        content.add_widget(scroll)
+        self.filter_dialog = MDDialog(title='Filtrer par famille', type='custom', content_cls=content, size_hint=(0.85, None))
+        self.filter_dialog.open()
+
+    def apply_filter(self, category_name):
+        self.selected_family_filter = category_name
+        if hasattr(self, 'btn_main_family_filter'):
+            self.btn_main_family_filter.text = category_name
+        if hasattr(self, 'filter_dialog') and self.filter_dialog:
+            self.filter_dialog.dismiss()
+        self.notify(f'Filtre: {category_name}', 'info')
+        if self.is_server_reachable:
+            cat_param = category_name if category_name != 'Tout' else ''
+            import urllib.parse
+            encoded_cat = urllib.parse.quote(cat_param)
+            url = f'http://{self.active_server_ip}:{5000}/api/products?category={encoded_cat}'
+            from kivy.network.urlrequest import UrlRequest
+            UrlRequest(url, on_success=self.on_products_loaded)
+        else:
+            if category_name == 'Tout' or category_name == 'TOUS':
+                self.current_product_list_source = self.all_products_raw
+            else:
+                self.current_product_list_source = [p for p in self.all_products_raw if str(p.get('category', '')).strip() == category_name.strip()]
+            self.load_more_products(reset=True)
 
     def _build_cart_screen(self):
         screen = MDScreen(name='cart')
@@ -2683,71 +2944,89 @@ class StockApp(MDApp):
         self.edit_dialog = MDDialog(title='', type='custom', content_cls=content, buttons=[], size_hint=(0.85, None))
         self.edit_dialog.open()
 
-    def open_ip_settings(self, instance):
-        content = MDBoxLayout(orientation='vertical', spacing='12dp', size_hint_y=None, height='450dp', padding='15dp')
-        scroll = MDScrollView()
-        box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing='20dp')
-        box.add_widget(MDBoxLayout(size_hint_y=None, height='20dp'))
-        server_card = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing='10dp')
-        server_card.add_widget(MDLabel(text='Configuration Serveur', font_style='Subtitle2', theme_text_color='Primary', bold=True))
-        self.local_ip_field = MDTextField(text=self.local_server_ip, hint_text='IP Local', icon_right='lan-connect')
-        self.external_ip_field = MDTextField(text=self.external_server_ip, hint_text='IP Externe', icon_right='web')
-        server_card.add_widget(self.local_ip_field)
-        server_card.add_widget(self.external_ip_field)
-        box.add_widget(server_card)
-        box.add_widget(MDBoxLayout(size_hint_y=None, height='1dp', md_bg_color=(0.9, 0.9, 0.9, 1)))
-        printer_card = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing='10dp')
-        printer_card.add_widget(MDLabel(text='Imprimante Bluetooth (80mm)', font_style='Subtitle2', theme_text_color='Primary', bold=True))
-        printer_conf = {'name': '', 'mac': '', 'auto': False}
-        if self.store.exists('printer_config'):
-            printer_conf = self.store.get('printer_config')
-        self.temp_selected_mac = printer_conf.get('mac', '')
-        printer_box = MDBoxLayout(orientation='horizontal', spacing='8dp', size_hint_y=None, height='50dp')
-        self.printer_name_field = MDTextField(text=printer_conf.get('name', ''), hint_text='Imprimante non définie', readonly=True, size_hint_x=0.7, pos_hint={'center_y': 0.5})
-        if self.temp_selected_mac:
-            self.printer_name_field.helper_text = f'ID: {self.temp_selected_mac}'
-        btn_search_bt = MDIconButton(icon='magnify', icon_size='20sp', md_bg_color=(0.2, 0.2, 0.2, 1), theme_text_color='Custom', text_color=(1, 1, 1, 1), pos_hint={'center_y': 0.6}, size_hint=(None, None), size=(dp(40), dp(40)), on_release=self.open_bluetooth_selector)
-        btn_clear_bt = MDIconButton(icon='delete', icon_size='20sp', md_bg_color=(0.8, 0.2, 0.2, 1), theme_text_color='Custom', text_color=(1, 1, 1, 1), pos_hint={'center_y': 0.6}, size_hint=(None, None), size=(dp(40), dp(40)), on_release=self.clear_printer_selection)
-        printer_box.add_widget(self.printer_name_field)
-        printer_box.add_widget(btn_search_bt)
-        printer_box.add_widget(btn_clear_bt)
-        printer_card.add_widget(printer_box)
-        row_opts = MDBoxLayout(orientation='horizontal', spacing='10dp', size_hint_y=None, height='40dp')
-        lbl_auto = MDLabel(text='Impression Auto après validation:', size_hint_x=0.85, valign='center', theme_text_color='Secondary')
-        self.chk_auto_print = MDCheckbox(active=printer_conf.get('auto', False), size_hint=(None, None), size=(dp(40), dp(40)), pos_hint={'center_y': 0.5})
-        row_opts.add_widget(lbl_auto)
-        row_opts.add_widget(self.chk_auto_print)
-        printer_card.add_widget(row_opts)
-        box.add_widget(printer_card)
-        box.add_widget(MDBoxLayout(size_hint_y=None, height='1dp', md_bg_color=(0.9, 0.9, 0.9, 1)))
-        admin_card = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing='10dp')
-        admin_card.add_widget(MDLabel(text='Administration', font_style='Subtitle2', theme_text_color='Primary', bold=True))
-        btn_seller = MDRaisedButton(text='GÉRER LE MODE VENDEUR', md_bg_color=(0.25, 0.25, 0.25, 1), text_color=(1, 1, 1, 1), size_hint_x=1, elevation=2, on_release=self.open_seller_auth_dialog)
-        admin_card.add_widget(btn_seller)
-        box.add_widget(admin_card)
-        scroll.add_widget(box)
-        content.add_widget(scroll)
-        self.dialog = MDDialog(title='Paramètres', type='custom', content_cls=content, buttons=[MDFlatButton(text='ANNULER', theme_text_color='Custom', text_color=(0.5, 0.5, 0.5, 1), on_release=lambda x: self.dialog.dismiss()), MDRaisedButton(text='SAUVEGARDER', md_bg_color=self.theme_cls.primary_color, on_release=self.save_ip)], size_hint=(0.9, None))
-        self.dialog.open()
+    def open_ip_settings(self, instance=None):
+        try:
+            if hasattr(self, 'dialog') and self.dialog:
+                self.dialog.dismiss()
+            scroll_view = MDScrollView(size_hint_y=None, height=dp(550))
+            content_list = MDList()
 
-    def save_ip(self, x):
-        local_ip = self.local_ip_field.text
-        ext_ip = self.external_ip_field.text
-        p_name = self.printer_name_field.text
-        p_mac = getattr(self, 'temp_selected_mac', '')
-        p_auto = self.chk_auto_print.active
+            def add_section(text):
+                lbl = MDLabel(text=text, theme_text_color='Custom', text_color=self.theme_cls.primary_color, font_style='Subtitle2', bold=True, size_hint_y=None, height=dp(40), padding=(dp(20), dp(10)))
+                content_list.add_widget(lbl)
+
+            def add_option(title, details, icon_name, action_callback, icon_color=None):
+                item = TwoLineAvatarIconListItem(text=title, secondary_text=details, on_release=action_callback)
+                icon = IconLeftWidget(icon=icon_name)
+                if icon_color:
+                    icon.text_color = icon_color
+                item.add_widget(icon)
+                content_list.add_widget(item)
+            add_section('CONNEXION SERVEUR')
+            ip_desc = f'Local: {self.local_server_ip}'
+            if self.external_server_ip:
+                ip_desc += f' | Ext: {self.external_server_ip}'
+            add_option('Configuration IP', ip_desc, 'lan-connect', self.show_ip_config_dialog)
+            add_section('IMPRIMANTE (Bluetooth)')
+            printer_conf = {'name': 'Non configurée', 'mac': '', 'auto': False}
+            if self.store.exists('printer_config'):
+                printer_conf = self.store.get('printer_config')
+            p_name = printer_conf.get('name', 'Non configurée')
+            if not p_name:
+                p_name = 'Non configurée'
+            add_option('Choisir Imprimante', f'Actuelle: {p_name}', 'printer-wireless', lambda x: [self.dialog.dismiss(), self.open_bluetooth_selector(x)])
+            add_option("Oublier l'imprimante", "Déconnecter l'appareil actuel", 'printer-off', lambda x: self.clear_printer_selection(x), icon_color=(0.8, 0, 0, 1))
+            auto_layout = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), padding=(dp(20), 0))
+            lbl_auto = MDLabel(text='Impression Auto après validation', theme_text_color='Primary', size_hint_x=0.8)
+            chk_auto = MDCheckbox(active=printer_conf.get('auto', False), size_hint=(None, None), size=(dp(40), dp(40)), pos_hint={'center_y': 0.5})
+            chk_auto.bind(active=self.toggle_auto_print_setting)
+            auto_layout.add_widget(lbl_auto)
+            auto_layout.add_widget(chk_auto)
+            content_list.add_widget(auto_layout)
+            add_section('ADMINISTRATION')
+            mode_desc = 'Activé (Restreint)' if self.is_seller_mode else 'Désactivé (Admin)'
+            add_option('Mode Vendeur', f'État: {mode_desc}', 'shield-account', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
+            scroll_view.add_widget(content_list)
+            self.dialog = MDDialog(title='Paramètres', type='custom', content_cls=scroll_view, buttons=[MDFlatButton(text='FERMER', theme_text_color='Custom', text_color=self.theme_cls.primary_color, on_release=lambda x: self.dialog.dismiss())], size_hint=(0.95, None))
+            self.dialog.open()
+        except Exception as e:
+            self.notify(f'Erreur Menu: {e}', 'error')
+
+    def show_ip_config_dialog(self, instance):
+        if self.dialog:
+            self.dialog.dismiss()
+        content = MDBoxLayout(orientation='vertical', spacing='15dp', size_hint_y=None, height=dp(180), padding=[0, dp(10), 0, 0])
+        self.field_local_ip = MDTextField(text=self.local_server_ip, hint_text='IP Locale (Wifi)', icon_right='router-wireless')
+        self.field_ext_ip = MDTextField(text=self.external_server_ip, hint_text='IP Externe (Internet)', icon_right='web')
+        content.add_widget(self.field_local_ip)
+        content.add_widget(self.field_ext_ip)
+        self.ip_dialog = MDDialog(title='Configuration Serveur', type='custom', content_cls=content, buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: [self.ip_dialog.dismiss(), self.open_ip_settings()]), MDRaisedButton(text='SAUVEGARDER', md_bg_color=(0, 0.6, 0, 1), on_release=self.save_ip_new_logic)])
+        self.ip_dialog.open()
+
+    def save_ip_new_logic(self, instance):
+        local_ip = self.field_local_ip.text.strip()
+        ext_ip = self.field_ext_ip.text.strip()
         if DataValidator.validate_ip(local_ip):
             self.local_server_ip = local_ip
             self.external_server_ip = ext_ip
             self.active_server_ip = local_ip
             self.store.put('config', ip=self.local_server_ip, ext_ip=self.external_server_ip, seller_mode=self.is_seller_mode)
-            self.store.put('printer_config', name=p_name, mac=p_mac, auto=p_auto)
-            if self.dialog:
-                self.dialog.dismiss()
-            self.notify('Paramètres enregistrés', 'success')
+            self.ip_dialog.dismiss()
+            self.notify('Paramètres IP enregistrés', 'success')
             self.check_server_heartbeat(0)
+            self.open_ip_settings()
         else:
             self.notify('Adresse IP Locale invalide', 'error')
+            self.field_local_ip.error = True
+
+    def toggle_auto_print_setting(self, instance, value):
+        name = ''
+        mac = ''
+        if self.store.exists('printer_config'):
+            conf = self.store.get('printer_config')
+            name = conf.get('name', '')
+            mac = conf.get('mac', '')
+        self.store.put('printer_config', name=name, mac=mac, auto=value)
 
     def open_seller_auth_dialog(self, x):
         if self.dialog:
@@ -2789,6 +3068,68 @@ class StockApp(MDApp):
         self.store.put('config', ip=self.local_server_ip, ext_ip=self.external_server_ip, seller_mode=value)
         self.update_dashboard_layout()
         self.notify(f"Mode Vendeur: {('Activé' if value else 'Désactivé')}", 'info')
+
+    def open_family_selector_dialog(self):
+        if not hasattr(self, 'all_categories') or not self.all_categories:
+            self.all_categories = ['Tout']
+            self.fetch_categories()
+        selectable_cats = [c for c in self.all_categories if c != 'Tout']
+        if not selectable_cats:
+            self.notify('Aucune famille disponible (Créer sur PC)', 'info')
+            return
+        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(400))
+        scroll = MDScrollView()
+        list_layout = MDList()
+        item_none = OneLineListItem(text='(Aucune)', on_release=lambda x: self._select_family('(Aucune)'))
+        list_layout.add_widget(item_none)
+        for cat in selectable_cats:
+            item = OneLineListItem(text=cat, on_release=lambda x, c=cat: self._select_family(c))
+            list_layout.add_widget(item)
+        scroll.add_widget(list_layout)
+        content.add_widget(scroll)
+        self.family_dialog = MDDialog(title='Choisir une famille', type='custom', content_cls=content, size_hint=(0.8, None), buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: self.family_dialog.dismiss())])
+        self.family_dialog.open()
+
+    def _select_family(self, category_name):
+        if hasattr(self, 'btn_select_family'):
+            self.btn_select_family.text = category_name
+        if hasattr(self, 'family_dialog'):
+            self.family_dialog.dismiss()
+
+    def fetch_categories(self):
+        if self.is_server_reachable:
+            UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/categories', on_success=self.on_categories_loaded)
+
+    def on_categories_loaded(self, req, res):
+        self.all_categories = ['Tout'] + res if res else ['Tout']
+        if hasattr(self, 'cat_menu') and self.cat_menu:
+            self.cat_menu.items = [{'text': cat, 'viewclass': 'OneLineListItem', 'on_release': lambda x=cat: self.set_category_filter(x)} for cat in self.all_categories]
+
+    def open_category_filter(self, button):
+        from kivymd.uix.menu import MDDropdownMenu
+        if not hasattr(self, 'all_categories') or not self.all_categories:
+            self.all_categories = ['Tout']
+            self.fetch_categories()
+        menu_items = [{'text': cat, 'viewclass': 'OneLineListItem', 'on_release': lambda x=cat: self.set_category_filter(x)} for cat in self.all_categories]
+        self.cat_menu = MDDropdownMenu(caller=button, items=menu_items, width_mult=4)
+        self.cat_menu.open()
+
+    def set_category_filter(self, category_name):
+        if hasattr(self, 'cat_menu') and self.cat_menu:
+            self.cat_menu.dismiss()
+        self.notify(f'Filtre: {category_name}', 'info')
+        if self.is_server_reachable:
+            cat_param = category_name if category_name != 'Tout' else ''
+            import urllib.parse
+            encoded_cat = urllib.parse.quote(cat_param)
+            url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/products?category={encoded_cat}'
+            UrlRequest(url, on_success=self.on_products_loaded)
+        else:
+            if category_name == 'Tout':
+                self.current_product_list_source = self.all_products_raw
+            else:
+                self.current_product_list_source = [p for p in self.all_products_raw if str(p.get('category', '')) == category_name]
+            self.load_more_products(reset=True)
 
     def fetch_products(self):
         UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/products', on_success=self.on_products_loaded)
@@ -3170,167 +3511,130 @@ class StockApp(MDApp):
     def show_manage_product_dialog(self, product, prefilled_barcode=None):
         try:
             if not self.is_server_reachable:
-                self.dialog = MDDialog(title='Hors Ligne', text='Impossible de gérer les produits en mode hors ligne.\nVeuillez vous connecter au serveur.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.dialog.dismiss())])
+                self.dialog = MDDialog(title='Hors Ligne', text='Modification impossible hors ligne.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.dialog.dismiss())])
                 self.dialog.open()
                 return
             if product and product.get('name') == 'Autre Article':
-                self.notify('Modification interdite pour cet article (Système)', 'error')
+                self.notify('Modification interdite (Système)', 'error')
                 return
             is_edit = product is not None
-            title = 'Fiche Produit'
+            title = 'Fiche Produit' if is_edit else 'Nouveau Produit'
             val_name = product.get('name', '') if is_edit else ''
-            val_ref = product.get('ref', product.get('product_ref', '')) if is_edit else ''
-            if is_edit:
-                val_barcode = product.get('barcode', '')
-            else:
-                val_barcode = prefilled_barcode if prefilled_barcode else ''
-            val_desc = product.get('description', '') if is_edit else ''
-            is_used = product.get('is_used', False) if is_edit else False
+            val_barcode = product.get('barcode', '') if is_edit else prefilled_barcode if prefilled_barcode else ''
+            val_reference = product.get('description', '') if is_edit else ''
+            val_num_prod = str(product.get('product_ref') or product.get('ref') or '') if is_edit else ''
+            if val_num_prod == 'None':
+                val_num_prod = ''
+            raw_fam = str(product.get('category', '')) if is_edit else ''
+            val_family = raw_fam if raw_fam and raw_fam.lower() != 'none' else '(Aucune)'
+            current_image = product.get('image', '') if is_edit else ''
 
             def fmt(v):
                 try:
-                    return f'{float(v):.2f}'
+                    val = float(v)
+                    return f'{val:.2f}' if val > 0 else ''
                 except:
                     return ''
-            if is_edit:
-                raw_stock = float(product.get('stock', 0) or 0.0)
-            else:
-                raw_stock = 0.0
-            is_unlimited = raw_stock <= -900000
-            if is_unlimited:
-                val_stock = ''
-            else:
-                val_stock = str(int(raw_stock)) if raw_stock.is_integer() else str(raw_stock)
+
+            def fmt_int(v):
+                try:
+                    val = float(v)
+                    return str(int(val)) if val.is_integer() else str(val)
+                except:
+                    return '0'
             val_cost = fmt(product.get('purchase_price', 0)) if is_edit else ''
             val_p1 = fmt(product.get('price', 0)) if is_edit else ''
             val_p2 = fmt(product.get('price_semi', 0)) if is_edit else ''
             val_p3 = fmt(product.get('price_wholesale', 0)) if is_edit else ''
-            scroll = MDScrollView(size_hint_y=None, height=dp(500))
-            box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15), padding=[0, 10, 0, 0])
-            box.add_widget(MDLabel(text='Identification', font_style='Caption', theme_text_color='Primary', bold=True))
-            self.field_num = MDTextField(text=val_ref, hint_text='Num de Produit', size_hint_x=1)
-            box.add_widget(self.field_num)
-            row_bar = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
-            self.field_bar = MDTextField(text=val_barcode, hint_text='Code-barres', size_hint_x=0.85)
-            btn_gen = MDIconButton(icon='barcode', theme_text_color='Custom', text_color=self.theme_cls.primary_color, on_release=lambda x: setattr(self.field_bar, 'text', '7' + ''.join([str(random.randint(0, 9)) for _ in range(12)])), size_hint_x=0.15, pos_hint={'center_y': 0.5})
-            row_bar.add_widget(self.field_bar)
-            row_bar.add_widget(btn_gen)
-            box.add_widget(row_bar)
-            self.field_name = SmartTextField(text=val_name, hint_text='Désignation (Nom)', required=True)
-            self.field_desc = SmartTextField(text=val_desc, hint_text='Référence (Description)')
-            box.add_widget(self.field_name)
-            box.add_widget(self.field_desc)
-            box.add_widget(MDBoxLayout(size_hint_y=None, height=dp(5)))
-            box.add_widget(MDLabel(text='Stock', font_style='Caption', theme_text_color='Primary', bold=True))
-            card_unlimited = MDCard(orientation='horizontal', size_hint_y=None, height=dp(50), padding=[dp(10), 0], ripple_behavior=True, md_bg_color=(0.96, 0.96, 0.96, 1), radius=[8], elevation=0)
-            self.chk_unlimited = MDCheckbox(active=is_unlimited, size_hint=(None, None), size=(dp(40), dp(40)), pos_hint={'center_y': 0.5})
-            if is_used:
-                self.chk_unlimited.disabled = True
-            lbl_unlimited = MDLabel(text='Quantité Illimitée', valign='center', theme_text_color='Primary', pos_hint={'center_y': 0.5})
-            if not is_used:
-                card_unlimited.bind(on_release=lambda x: setattr(self.chk_unlimited, 'active', not self.chk_unlimited.active))
-            card_unlimited.add_widget(self.chk_unlimited)
-            card_unlimited.add_widget(lbl_unlimited)
-            box.add_widget(card_unlimited)
-            self.field_stock = SmartTextField(text=val_stock, hint_text='Quantité Stock', input_filter='float')
+            raw_stock = float(product.get('stock', 0) or 0.0) if is_edit else 0.0
+            is_unlimited = raw_stock <= -900000
+            val_stock = '' if is_unlimited else fmt_int(raw_stock)
+            has_movements = product.get('is_used', False) if is_edit else False
+            scroll = MDScrollView(size_hint_y=None, height=dp(600))
+            main_box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15), padding=[dp(10), dp(10), dp(10), dp(20)])
+            card_info = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+            self.field_num = MDTextField(text=val_num_prod, hint_text='N° Produit', size_hint_x=1, icon_right='pound')
+            card_info.add_widget(self.field_num)
+            box_bar = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
+            self.field_bar = MDTextField(text=val_barcode, hint_text='Code-Barres', size_hint_x=1, icon_right='barcode')
 
-            def on_checkbox_active(checkbox, value):
-                try:
-                    if value:
-                        self.field_stock.disabled = True
-                        self.field_stock.text = ''
-                        self.field_stock.hint_text = 'Illimité'
-                    elif is_used:
-                        self.field_stock.disabled = True
-                        self.field_stock.helper_text = 'Verrouillé (Mouvement détecté)'
-                        self.field_stock.helper_text_mode = 'persistent'
-                    else:
-                        self.field_stock.disabled = False
-                        self.field_stock.text = val_stock
-                        self.field_stock.hint_text = 'Quantité Stock'
-                        self.field_stock.helper_text = ''
-                except:
-                    pass
-            self.chk_unlimited.bind(active=on_checkbox_active)
-            on_checkbox_active(self.chk_unlimited, is_unlimited)
-            box.add_widget(self.field_stock)
-            box.add_widget(MDLabel(text="Coût d'Achat", font_style='Caption', theme_text_color='Primary', bold=True))
-            self.field_cost = SmartTextField(text=val_cost, hint_text='Prix Achat', input_filter='float')
-            if is_used:
-                self.field_cost.disabled = True
-                self.field_cost.helper_text = 'Verrouillé (Mouvement détecté)'
-                self.field_cost.helper_text_mode = 'persistent'
-            box.add_widget(self.field_cost)
-            box.add_widget(MDBoxLayout(size_hint_y=None, height=dp(5)))
-            box.add_widget(MDLabel(text='Tarification de Vente', font_style='Caption', theme_text_color='Primary', bold=True))
-            self.field_p1 = SmartTextField(text=val_p1, hint_text='Prix Détail (Vente)', input_filter='float')
-            box.add_widget(self.field_p1)
-            self.field_p2 = SmartTextField(text=val_p2, hint_text='Prix Demi-Gros', input_filter='float')
-            box.add_widget(self.field_p2)
-            self.field_p3 = SmartTextField(text=val_p3, hint_text='Prix Gros', input_filter='float')
-            box.add_widget(self.field_p3)
-            scroll.add_widget(box)
-            if not is_edit:
+            def scan_into_field(x):
+                self.target_scan_field = self.field_bar
+                self.open_barcode_scanner(None)
+            btn_scan_field = MDIconButton(icon='barcode-scan', on_release=scan_into_field)
+            btn_gen = MDIconButton(icon='refresh', on_release=lambda x: setattr(self.field_bar, 'text', '7' + ''.join([str(random.randint(0, 9)) for _ in range(12)])))
+            box_bar.add_widget(self.field_bar)
+            box_bar.add_widget(btn_scan_field)
+            box_bar.add_widget(btn_gen)
+            card_info.add_widget(box_bar)
+            self.field_name = SmartTextField(text=val_name, hint_text='Désignation*', required=True, icon_right='tag-text-outline')
+            card_info.add_widget(self.field_name)
+            self.field_reference = SmartTextField(text=val_reference, hint_text='Référence (Description)', icon_right='text')
+            card_info.add_widget(self.field_reference)
+            card_info.add_widget(MDLabel(text='Famille:', font_style='Caption', theme_text_color='Secondary'))
+            self.btn_select_family = MDFlatButton(text=val_family, theme_text_color='Custom', text_color=(0.1, 0.1, 0.1, 1), size_hint_x=1, on_release=lambda x: self.open_family_selector_dialog())
+            fam_box = MDCard(size_hint_y=None, height=dp(40), radius=[4], md_bg_color=(0.95, 0.95, 0.95, 1), elevation=0)
+            fam_box.add_widget(self.btn_select_family)
+            card_info.add_widget(fam_box)
+            if current_image:
+                img_status = 'Image disponible (PC)'
+                img_color = (0, 0.6, 0, 1)
+            else:
+                img_status = 'Aucune image'
+                img_color = (0.5, 0.5, 0.5, 1)
+            box_img = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True, padding=[0, dp(10), 0, 0])
+            box_img.add_widget(MDIcon(icon='image', theme_text_color='Custom', text_color=img_color))
+            box_img.add_widget(MDLabel(text=img_status, font_style='Caption', theme_text_color='Custom', text_color=img_color))
+            card_info.add_widget(box_img)
+            main_box.add_widget(card_info)
+            card_stock = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+            row_stock = MDBoxLayout(orientation='horizontal', spacing=dp(15), adaptive_height=True)
+            self.chk_unlimited = MDCheckbox(active=is_unlimited, size_hint=(None, None), size=(dp(40), dp(40)))
+            row_stock.add_widget(self.chk_unlimited)
+            row_stock.add_widget(MDLabel(text='Illimité'))
+            self.field_stock = MDTextField(text=val_stock, hint_text='Quantité', input_filter='float', size_hint_x=0.5)
 
-                @mainthread
-                def update_ref_ui(req, res):
-                    if res and 'ref' in res:
-                        self.field_num.text = str(res['ref'])
-                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/get_next_ref', on_success=update_ref_ui)
+            def on_chk(chk, val):
+                self.field_stock.disabled = val or has_movements
+            self.chk_unlimited.bind(active=on_chk)
+            on_chk(None, is_unlimited)
+            row_stock.add_widget(self.field_stock)
+            card_stock.add_widget(row_stock)
+            main_box.add_widget(card_stock)
+            card_price = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+            self.field_cost = MDTextField(text=val_cost, hint_text='Prix Achat', input_filter='float')
+            self.field_p1 = MDTextField(text=val_p1, hint_text='Prix Détail', input_filter='float')
+            self.field_p2 = MDTextField(text=val_p2, hint_text='Prix Demi-Gros', input_filter='float')
+            self.field_p3 = MDTextField(text=val_p3, hint_text='Prix Gros', input_filter='float')
+            card_price.add_widget(self.field_cost)
+            card_price.add_widget(self.field_p1)
+            card_price.add_widget(self.field_p2)
+            card_price.add_widget(self.field_p3)
+            main_box.add_widget(card_price)
 
-            def save_product(x):
-                try:
-                    if not self.field_name.get_value().strip():
-                        self.field_name.error = True
-                        return
-                    stock_val = -999999999999 if self.chk_unlimited.active else float(self.field_stock.get_value() or 0.0)
-                    cost_val = float(self.field_cost.get_value() or 0.0)
-                    p1_val = float(self.field_p1.get_value() or 0.0)
-                    p2_val = float(self.field_p2.get_value() or 0.0)
-                    p3_val = float(self.field_p3.get_value() or 0.0)
-                    payload = {'name': self.field_name.get_value().strip(), 'product_ref': self.field_num.text.strip(), 'barcode': self.field_bar.text.strip(), 'description': self.field_desc.get_value().strip(), 'stock': stock_val, 'cost': cost_val, 'price': p1_val, 'price_semi': p2_val, 'price_wholesale': p3_val, 'category': '', 'unit': '', 'user_name': self.current_user_name}
-                    endpoint = '/api/update_product' if is_edit else '/api/add_product'
-                    if is_edit:
-                        payload['id'] = product['id']
-
-                    def on_save_ok(req, res):
-                        if self.dialog:
-                            self.dialog.dismiss()
-                        if hasattr(self, 'search_field') and self.search_field:
-                            self.search_field.text = ''
-                        self.fetch_products()
-                        self.notify(f"Produit {('Modifié' if is_edit else 'Ajouté')} avec succès", 'success')
-                    UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(payload), req_headers={'Content-Type': 'application/json'}, method='POST', on_success=on_save_ok, on_failure=lambda r, e: self.notify('Erreur serveur', 'error'), on_error=lambda r, e: self.notify('Erreur connexion', 'error'))
-                except ValueError:
-                    self.notify('Valeurs numériques invalides', 'error')
-                except Exception as e:
-                    self.notify(f'Erreur: {e}', 'error')
-
-            def delete_product_flow(x):
-                if is_used:
-                    self.notify('Impossible: Produit utilisé', 'error')
+            def save_product_action(x):
+                name_val = self.field_name.get_value().strip()
+                if not name_val:
                     return
 
-                def confirm(y):
-                    if self.conf_diag:
-                        self.conf_diag.dismiss()
-
-                    def on_del_ok(req, res):
-                        if self.dialog:
-                            self.dialog.dismiss()
-                        if hasattr(self, 'search_field') and self.search_field:
-                            self.search_field.text = ''
-                        self.fetch_products()
-                        self.notify('Produit supprimé', 'success')
-                    UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/delete_product', req_body=json.dumps({'id': product['id']}), req_headers={'Content-Type': 'application/json'}, method='POST', on_success=on_del_ok, on_failure=lambda r, e: self.notify('Erreur suppression', 'error'))
-                name_disp = self.fix_text(val_name)
-                self.conf_diag = MDDialog(title='Confirmation', text=f'Supprimer {name_disp} ?', buttons=[MDFlatButton(text='NON', on_release=lambda z: self.conf_diag.dismiss()), MDRaisedButton(text='OUI', md_bg_color=(1, 0, 0, 1), on_release=confirm)])
-                self.conf_diag.open()
-            btns = [MDFlatButton(text='FERMER', on_release=lambda x: self.dialog.dismiss())]
-            if is_edit:
-                btns.append(MDFlatButton(text='SUPPRIMER', theme_text_color='Error', on_release=delete_product_flow))
-            btns.append(MDRaisedButton(text='ENREGISTRER', on_release=save_product))
-            self.dialog = MDDialog(title=title, type='custom', content_cls=scroll, buttons=btns)
+                def sf(tf):
+                    try:
+                        return float(str(tf.text).replace(',', '.') or 0)
+                    except:
+                        return 0.0
+                stock_val = -1000000.0 if self.chk_unlimited.active else sf(self.field_stock)
+                fam_val = self.btn_select_family.text
+                if fam_val == '(Aucune)' or fam_val == 'Tout':
+                    fam_val = ''
+                payload = {'action': 'update' if is_edit else 'add', 'id': product['id'] if is_edit else None, 'name': name_val, 'barcode': self.field_bar.text.strip(), 'description': self.field_reference.get_value().strip(), 'product_ref': self.field_num.text.strip(), 'category': fam_val, 'stock': stock_val, 'cost': sf(self.field_cost), 'price': sf(self.field_p1), 'price_semi': sf(self.field_p2), 'price_wholesale': sf(self.field_p3), 'image_path': current_image, 'user_name': self.current_user_name, 'unit': product.get('unit', '') if is_edit else '', 'tva': float(product.get('tva', 0) or 0) if is_edit else 0}
+                endpoint = '/api/update_product' if is_edit else '/api/add_product'
+                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(payload), req_headers={'Content-Type': 'application/json'}, method='POST', on_success=lambda r, s: [self.dialog.dismiss(), self.fetch_products(), self.notify('Succès', 'success')], on_failure=lambda r, e: self.notify('Erreur serveur', 'error'))
+            footer = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(20), 0, 0])
+            footer.add_widget(MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), size_hint_x=1, on_release=save_product_action))
+            footer.add_widget(MDRaisedButton(text='FERMER', md_bg_color=(0.9, 0.9, 0.9, 1), text_color=(0.2, 0.2, 0.2, 1), size_hint_x=1, on_release=lambda x: self.dialog.dismiss()))
+            main_box.add_widget(footer)
+            scroll.add_widget(main_box)
+            self.dialog = MDDialog(title=title, type='custom', content_cls=scroll, size_hint=(0.95, 0.9))
             self.dialog.open()
         except Exception as e:
             self.notify(f'Erreur UI: {e}', 'error')
@@ -5021,6 +5325,12 @@ class StockApp(MDApp):
             self.sm.current = 'dashboard'
 
     def open_barcode_scanner(self, instance):
+        self.temp_scanned_cart = []
+        self.potential_code = None
+        self.consecutive_frames = 0
+        self.last_scan_time = 0
+        if not hasattr(self, 'target_scan_field') or instance is not None:
+            self.target_scan_field = None
         if not decode:
             self.notify('Erreur: Librairie pyzbar manquante', 'error')
             return
@@ -5031,16 +5341,16 @@ class StockApp(MDApp):
                 if grants and grants[0]:
                     Clock.schedule_once(lambda dt: self._launch_camera_widget(), 0.1)
                 else:
-                    self.notify('Permission Caméra Refusée !', 'error')
+                    self.notify('Permission Caméra Refusée', 'error')
             request_permissions([Permission.CAMERA], on_permission_result)
         else:
             self._launch_camera_widget()
 
     def _launch_camera_widget(self):
-        self.temp_scanned_cart = []
-        self.last_scan_time = 0
+        self.scanner_start_time = time.time()
         try:
-            self.camera_widget = Camera(play=True, index=0, allow_stretch=True, keep_ratio=False)
+            from kivy.uix.camera import Camera
+            self.camera_widget = Camera(play=True, index=0, resolution=(640, 480), allow_stretch=True, keep_ratio=False)
             with self.camera_widget.canvas.before:
                 PushMatrix()
                 self.rotation = Rotate(angle=-90, origin=self.camera_widget.center)
@@ -5048,81 +5358,254 @@ class StockApp(MDApp):
                 PopMatrix()
             self.camera_widget.bind(center=lambda instance, value: setattr(self.rotation, 'origin', instance.center))
         except Exception as e:
-            self.notify('Erreur init caméra', 'error')
+            self.notify('Erreur chargement caméra', 'error')
             return
+        is_single_mode = hasattr(self, 'target_scan_field') and self.target_scan_field is not None
         root_layout = MDBoxLayout(orientation='vertical', spacing=0)
-        camera_area = MDFloatLayout(size_hint_y=0.45)
+        cam_size = 1.0 if is_single_mode else 0.55
+        camera_area = MDFloatLayout(size_hint_y=cam_size)
         self.camera_widget.size_hint = (1, 1)
         self.camera_widget.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
         camera_area.add_widget(self.camera_widget)
-        close_btn = MDIconButton(icon='close', icon_size='32sp', md_bg_color=(0, 0, 0, 0.4), theme_text_color='Custom', text_color=(1, 1, 1, 1), pos_hint={'top': 0.95, 'right': 0.95}, on_release=self.close_barcode_scanner)
+        close_btn = MDIconButton(icon='close', icon_size='36sp', md_bg_color=(0, 0, 0, 0.5), theme_text_color='Custom', text_color=(1, 1, 1, 1), pos_hint={'top': 0.96, 'right': 0.96}, on_release=self.close_barcode_scanner)
         camera_area.add_widget(close_btn)
         root_layout.add_widget(camera_area)
-        list_container = MDCard(orientation='vertical', size_hint_y=0.55, radius=[20, 20, 0, 0], md_bg_color=(1, 1, 1, 1), elevation=0)
-        header_box = MDBoxLayout(size_hint_y=None, height=dp(45), padding=[dp(20), 0])
-        self.lbl_scan_count = MDLabel(text='Articles scannés: 0', bold=True, theme_text_color='Primary', font_style='Subtitle1')
-        header_box.add_widget(self.lbl_scan_count)
-        list_container.add_widget(header_box)
-        scroll = MDScrollView()
-        self.scan_list_widget = MDList()
-        scroll.add_widget(self.scan_list_widget)
-        list_container.add_widget(scroll)
-        btn_confirm = MDRaisedButton(text='CONFIRMER & AJOUTER', font_size='18sp', size_hint=(1, None), height=dp(60), md_bg_color=(0, 0.7, 0, 1), elevation=0, on_release=self.finish_continuous_scan)
-        list_container.add_widget(btn_confirm)
-        root_layout.add_widget(list_container)
+        if not is_single_mode:
+            list_container = MDCard(orientation='vertical', size_hint_y=0.45, radius=[20, 20, 0, 0], md_bg_color=(1, 1, 1, 1), elevation=0)
+            header = MDBoxLayout(size_hint_y=None, height=dp(40), padding=[dp(20), 0])
+            self.lbl_scan_count = MDLabel(text='Total scannés: 0', bold=True, theme_text_color='Primary')
+            header.add_widget(self.lbl_scan_count)
+            list_container.add_widget(header)
+            scroll = MDScrollView()
+            self.scan_list_widget = MDList()
+            scroll.add_widget(self.scan_list_widget)
+            list_container.add_widget(scroll)
+            btn_ok = MDRaisedButton(text='TERMINER', font_size='18sp', size_hint=(1, None), height=dp(55), md_bg_color=(0, 0.7, 0, 1), elevation=0, on_release=self.finish_continuous_scan)
+            list_container.add_widget(btn_ok)
+            root_layout.add_widget(list_container)
         self.scan_dialog = ModalView(size_hint=(1, 1), auto_dismiss=False, background_color=(0, 0, 0, 1))
         self.scan_dialog.add_widget(root_layout)
         self.scan_dialog.open()
-        self.scan_event = Clock.schedule_interval(self.detect_barcode_frame, 1.0 / 10.0)
+        self.scan_event = Clock.schedule_interval(self.detect_barcode_frame, 1.0 / 20.0)
 
     def close_barcode_scanner(self, *args):
         if hasattr(self, 'scan_event') and self.scan_event:
             self.scan_event.cancel()
-        if hasattr(self, 'camera_widget'):
+            self.scan_event = None
+        if hasattr(self, 'camera_widget') and self.camera_widget:
             self.camera_widget.play = False
         if hasattr(self, 'scan_dialog') and self.scan_dialog:
             self.scan_dialog.dismiss()
             self.scan_dialog = None
+        self.temp_scanned_cart = []
+        self.target_scan_field = None
 
     def detect_barcode_frame(self, dt):
+        if not hasattr(self, 'scan_dialog') or not self.scan_dialog or (not self.scan_dialog.parent):
+            return
         if not hasattr(self, 'camera_widget') or not self.camera_widget.texture:
             return
-        current_time = time.time()
-        if current_time - getattr(self, 'last_scan_attempt', 0) < 0.2:
+        if time.time() - getattr(self, 'scanner_start_time', 0) < 1.2:
             return
-        self.last_scan_attempt = current_time
         try:
-            pixels = self.camera_widget.texture.pixels
-            size = self.camera_widget.texture.size
-            pil_image = PILImage.frombytes(mode='RGBA', size=size, data=pixels).convert('L')
-            barcodes = decode(pil_image)
+            texture = self.camera_widget.texture
+            img_data = PILImage.frombytes(mode='RGBA', size=texture.size, data=texture.pixels).convert('L')
+            barcodes = decode(img_data)
             if barcodes:
-                found_code = barcodes[0].data.decode('utf-8')
-                if time.time() - self.last_scan_time > 1.5:
-                    self.last_scan_time = time.time()
-                    Clock.schedule_once(lambda dt: self.process_continuous_scan(found_code))
-        except Exception as e:
-            print(f'Scan Frame Error: {e}')
+                code = barcodes[0].data.decode('utf-8').strip()
+                if code == self.potential_code:
+                    self.consecutive_frames += 1
+                else:
+                    self.potential_code = code
+                    self.consecutive_frames = 1
+                if self.consecutive_frames >= 2:
+                    if time.time() - self.last_scan_time > 1.5:
+                        self.last_scan_time = time.time()
+                        self.consecutive_frames = 0
+                        self.potential_code = None
+                        Clock.schedule_once(lambda dt: self.process_continuous_scan(code))
+            else:
+                self.consecutive_frames = 0
+        except:
+            pass
 
     def process_continuous_scan(self, code):
-        found_product = None
+        if not hasattr(self, 'scan_dialog') or not self.scan_dialog.parent:
+            return
+        if hasattr(self, 'target_scan_field') and self.target_scan_field:
+            self.target_scan_field.text = code
+            self.play_sound('success')
+            self.close_barcode_scanner()
+            return
+        prod = None
         for p in self.all_products_raw:
             p_code = str(p.get('barcode', '')).strip()
             if p_code == code:
-                found_product = p
+                prod = p
                 break
-        if found_product:
+        if prod:
             for item in self.temp_scanned_cart:
-                if item['id'] == found_product['id']:
+                if str(item['id']) == str(prod['id']):
                     self.play_sound('duplicate')
-                    self.show_duplicate_alert(found_product.get('name', 'Produit'))
+                    self.show_duplicate_alert(prod.get('name', 'Article'))
                     return
-            self.temp_scanned_cart.append(found_product)
+            self.temp_scanned_cart.append(prod)
             self.update_scan_list_ui()
             self.play_sound('success')
         else:
             self.play_sound('error')
             self.show_not_found_alert(code)
+
+    def update_scan_list_ui(self):
+        from kivymd.uix.card import MDCard
+        from kivymd.uix.boxlayout import MDBoxLayout
+        from kivymd.uix.label import MDLabel
+        from kivymd.uix.button import MDIconButton
+        self.scan_list_widget.clear_widgets()
+        count = len(self.temp_scanned_cart)
+        self.lbl_scan_count.text = f'Articles scannés: {count}'
+        if count == 0:
+            return
+        customer_category = 'Détail'
+        if self.selected_entity:
+            customer_category = str(self.selected_entity.get('category', 'Détail')).strip()
+        sales_modes = ['sale', 'return_sale', 'invoice_sale', 'proforma']
+        is_sales_mode = self.current_mode in sales_modes
+        for prod in reversed(self.temp_scanned_cart):
+            raw_name = self.fix_text(prod.get('name', 'Inconnu'))
+            raw_ref_text = str(prod.get('reference', '') or '').strip()
+            display_text = raw_name
+            if raw_ref_text:
+                display_text += f' (Ref: {self.fix_text(raw_ref_text)})'
+            final_price = 0.0
+            if is_sales_mode:
+                base_price = float(prod.get('price', 0) or 0)
+                final_price = base_price
+                if customer_category == 'Gros':
+                    val = float(prod.get('price_wholesale', 0) or 0)
+                    if val > 0:
+                        final_price = val
+                elif customer_category == 'Demi-Gros':
+                    val = float(prod.get('price_semi', 0) or 0)
+                    if val > 0:
+                        final_price = val
+                if prod.get('is_promo_active', 0) == 1:
+                    promo_exp = str(prod.get('promo_expiry', '')).strip()
+                    date_valid = True
+                    if len(promo_exp) > 5:
+                        try:
+                            exp_date = datetime.strptime(promo_exp, '%Y-%m-%d').date()
+                            if datetime.now().date() > exp_date:
+                                date_valid = False
+                        except:
+                            pass
+                    if date_valid:
+                        p_type = prod.get('promo_type', 'fixed')
+                        try:
+                            p_val = float(prod.get('promo_value', 0))
+                        except:
+                            p_val = 0.0
+                        if p_type == 'fixed':
+                            if p_val > 0:
+                                final_price = p_val
+                        else:
+                            final_price = base_price * (1 - p_val / 100)
+            else:
+                final_price = float(prod.get('purchase_price', prod.get('price', 0)) or 0)
+            card = MDCard(orientation='horizontal', size_hint_y=None, height=dp(75), padding=[dp(15), 0, 0, 0], radius=[0], elevation=0, md_bg_color=(1, 1, 1, 1))
+            text_box = MDBoxLayout(orientation='vertical', pos_hint={'center_y': 0.5}, adaptive_height=True, spacing=dp(4))
+            lbl_name = MDLabel(text=display_text, font_style='Subtitle1', theme_text_color='Primary', shorten=False, max_lines=2, halign='left', adaptive_height=True)
+            lbl_price = MDLabel(text=f'Prix: {final_price:.2f} DA', font_style='Caption', theme_text_color='Secondary', bold=True, halign='left', adaptive_height=True)
+            text_box.add_widget(lbl_name)
+            text_box.add_widget(lbl_price)
+            del_btn = MDIconButton(icon='delete', theme_text_color='Custom', text_color=(0.9, 0, 0, 1), pos_hint={'center_y': 0.5}, icon_size='24sp', on_release=lambda x, p=prod: self.remove_temp_item(p))
+            card.add_widget(text_box)
+            card.add_widget(del_btn)
+            sep = MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.95, 0.95, 0.95, 1))
+            self.scan_list_widget.add_widget(card)
+            self.scan_list_widget.add_widget(sep)
+
+    def finish_continuous_scan(self, instance):
+        if not hasattr(self, 'temp_scanned_cart') or not self.temp_scanned_cart:
+            self.close_barcode_scanner()
+            return
+        items_to_add = list(self.temp_scanned_cart)
+        self.close_barcode_scanner()
+        count = 0
+        for product in items_to_add:
+            self.add_scanned_item_to_cart(product)
+            count += 1
+        if count > 0:
+            self.notify(f'{count} Articles ajoutés au panier', 'success')
+        self.temp_scanned_cart = []
+
+    def add_scanned_item_to_cart(self, product):
+        try:
+            sales_modes = ['sale', 'return_sale', 'invoice_sale', 'proforma']
+            is_sales_mode = self.current_mode in sales_modes
+            final_price = 0.0
+            if is_sales_mode:
+                base_price = float(product.get('price', 0) or 0)
+                final_price = base_price
+                if self.selected_entity:
+                    cat = str(self.selected_entity.get('category', 'Détail')).strip()
+                    if cat == 'Gros':
+                        w_price = float(product.get('price_wholesale', 0) or 0)
+                        if w_price > 0:
+                            final_price = w_price
+                    elif cat == 'Demi-Gros':
+                        s_price = float(product.get('price_semi', 0) or 0)
+                        if s_price > 0:
+                            final_price = s_price
+                raw_active = product.get('is_promo_active', 0)
+                is_promo = str(raw_active) == '1' or raw_active == 1
+                if is_promo:
+                    promo_exp = str(product.get('promo_expiry', '')).strip()
+                    date_valid = True
+                    if len(promo_exp) > 5:
+                        try:
+                            exp_date = datetime.strptime(promo_exp, '%Y-%m-%d').date()
+                            if datetime.now().date() > exp_date:
+                                date_valid = False
+                        except:
+                            pass
+                    if date_valid:
+                        try:
+                            p_val = float(product.get('promo_value', 0))
+                        except:
+                            p_val = 0.0
+                        p_type = str(product.get('promo_type', 'fixed'))
+                        if p_type == 'fixed':
+                            if p_val > 0:
+                                final_price = p_val
+                        else:
+                            final_price = base_price * (1 - p_val / 100)
+            else:
+                cost_price = float(product.get('purchase_price', 0) or 0)
+                if cost_price == 0:
+                    cost_price = float(product.get('price', 0) or 0)
+                final_price = cost_price
+            qty_to_add = 1.0
+            found = False
+            for item in self.cart:
+                if str(item['id']) == str(product['id']):
+                    item['qty'] += qty_to_add
+                    item['price'] = final_price
+                    found = True
+                    break
+            if not found:
+                new_item = {'id': product['id'], 'name': product['name'], 'price': final_price, 'qty': qty_to_add, 'original_unit_price': final_price, 'tva': 0, 'has_promo': False}
+                if product.get('product_ref'):
+                    new_item['product_ref'] = product.get('product_ref')
+                self.cart.append(new_item)
+            self.update_cart_button()
+        except Exception as e:
+            print(f'Add Cart Error: {e}')
+
+    def remove_temp_item(self, product_to_remove):
+        if product_to_remove in self.temp_scanned_cart:
+            self.temp_scanned_cart.remove(product_to_remove)
+            self.update_scan_list_ui()
 
     def show_duplicate_alert(self, product_name):
         if hasattr(self, 'is_showing_alert') and self.is_showing_alert:
@@ -5136,47 +5619,6 @@ class StockApp(MDApp):
         self.dup_dialog = MDDialog(title='Déjà scanné !', text=f'Le produit:\n[b]{short_name}[/b]\n\nest déjà dans la liste.', buttons=[MDRaisedButton(text='OK', md_bg_color=(0.8, 0, 0, 1), on_release=close_alert)], size_hint=(0.85, None))
         self.dup_dialog.open()
 
-    def update_scan_list_ui(self):
-        from kivymd.uix.card import MDCard
-        from kivymd.uix.boxlayout import MDBoxLayout
-        from kivymd.uix.label import MDLabel
-        from kivymd.uix.button import MDIconButton
-        self.scan_list_widget.clear_widgets()
-        count = len(self.temp_scanned_cart)
-        self.lbl_scan_count.text = f'Articles scannés: {count}'
-        if count == 0:
-            return
-        customer_cat = 'Détail'
-        if self.selected_entity:
-            raw_cat = str(self.selected_entity.get('category', ''))
-            if raw_cat in ['Gros', 'جملة']:
-                customer_cat = 'Gros'
-            elif raw_cat in ['Demi-Gros', 'نصف جملة']:
-                customer_cat = 'Demi-Gros'
-        for prod in reversed(self.temp_scanned_cart):
-            prod_name = self.fix_text(prod.get('name', 'Inconnu'))
-            final_price = float(prod.get('price', 0) or 0)
-            if customer_cat == 'Gros':
-                p_gros = float(prod.get('price_wholesale', 0) or 0)
-                if p_gros > 0:
-                    final_price = p_gros
-            elif customer_cat == 'Demi-Gros':
-                p_semi = float(prod.get('price_semi', 0) or 0)
-                if p_semi > 0:
-                    final_price = p_semi
-            card = MDCard(orientation='horizontal', size_hint_y=None, height=dp(75), padding=[dp(15), 0, 0, 0], radius=[0], elevation=0, md_bg_color=(1, 1, 1, 1))
-            text_box = MDBoxLayout(orientation='vertical', pos_hint={'center_y': 0.5}, adaptive_height=True, spacing=dp(4))
-            lbl_name = MDLabel(text=prod_name, font_style='Subtitle1', theme_text_color='Primary', shorten=False, max_lines=2, halign='left', adaptive_height=True)
-            lbl_price = MDLabel(text=f'Prix: {final_price:.2f} DA', font_style='Caption', theme_text_color='Secondary', bold=True, halign='left', adaptive_height=True)
-            text_box.add_widget(lbl_name)
-            text_box.add_widget(lbl_price)
-            del_btn = MDIconButton(icon='delete', theme_text_color='Custom', text_color=(0.9, 0, 0, 1), pos_hint={'center_y': 0.5}, icon_size='24sp', on_release=lambda x, p=prod: self.remove_temp_item(p))
-            card.add_widget(text_box)
-            card.add_widget(del_btn)
-            sep = MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.95, 0.95, 0.95, 1))
-            self.scan_list_widget.add_widget(card)
-            self.scan_list_widget.add_widget(sep)
-
     def show_not_found_alert(self, code):
         if hasattr(self, 'is_showing_alert') and self.is_showing_alert:
             return
@@ -5188,78 +5630,16 @@ class StockApp(MDApp):
         self.not_found_dialog = MDDialog(title='Introuvable !', text=f"Le code-barres:\n[b]{code}[/b]\n\nn'existe pas dans la base de données.", buttons=[MDRaisedButton(text='OK', md_bg_color=(0.2, 0.2, 0.2, 1), on_release=close)], size_hint=(0.85, None))
         self.not_found_dialog.open()
 
-    def remove_temp_item(self, product_to_remove):
-        if product_to_remove in self.temp_scanned_cart:
-            self.temp_scanned_cart.remove(product_to_remove)
-            self.update_scan_list_ui()
-
-    def finish_continuous_scan(self, instance):
-        self.close_barcode_scanner()
-        if not self.temp_scanned_cart:
+    def show_zoomed_image(self, image_source, title_text='Image'):
+        if not image_source:
             return
-        count = 0
-        for product in self.temp_scanned_cart:
-            self.add_scanned_item_to_cart(product)
-            count += 1
-        self.notify(f'{count} Articles ajoutés au panier', 'success')
-        self.temp_scanned_cart = []
-
-    def add_scanned_item_to_cart(self, product):
-        try:
-            is_sale_context = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
-            original_unit_price = 0.0
-            if is_sale_context:
-                if product.get('has_promo', False):
-                    original_unit_price = float(product.get('price', 0))
-                else:
-                    curr_price = float(product.get('price', 0))
-                    if self.selected_entity:
-                        cat = str(self.selected_entity.get('category', ''))
-                        if cat in ['Gros', 'جملة']:
-                            curr_price = float(product.get('price_wholesale', 0) or 0)
-                        elif cat in ['Demi-Gros', 'نصف جملة']:
-                            curr_price = float(product.get('price_semi', 0) or 0)
-                        if curr_price == 0:
-                            curr_price = float(product.get('price', 0))
-                    original_unit_price = curr_price
-            else:
-                original_unit_price = float(product.get('purchase_price', product.get('price', 0)) or 0)
-            qty = 1.0
-            specials = product.get('special_prices', [])
-            found = False
-            for item in self.cart:
-                if item['id'] == product['id']:
-                    new_total_qty = item['qty'] + qty
-                    item['qty'] = new_total_qty
-                    new_price = item.get('original_unit_price', original_unit_price)
-                    if is_sale_context and specials and (not product.get('has_promo', False)):
-                        specials.sort(key=lambda x: x['qty'], reverse=True)
-                        for sp in specials:
-                            if new_total_qty >= sp['qty']:
-                                if sp['type'] == 'TOTAL':
-                                    new_price = float(sp['price']) / new_total_qty
-                                else:
-                                    new_price = float(sp['price'])
-                                break
-                    item['price'] = new_price
-                    found = True
-                    break
-            if not found:
-                final_price = original_unit_price
-                if is_sale_context and specials and (not product.get('has_promo', False)):
-                    specials.sort(key=lambda x: x['qty'], reverse=True)
-                    for sp in specials:
-                        if qty >= sp['qty']:
-                            if sp['type'] == 'TOTAL':
-                                final_price = float(sp['price']) / qty
-                            else:
-                                final_price = float(sp['price'])
-                            break
-                self.cart.append({'id': product['id'], 'name': product['name'], 'price': final_price, 'qty': qty, 'original_unit_price': original_unit_price, 'special_prices': specials, 'has_promo': product.get('has_promo', False)})
-            self.update_cart_button()
-            self.notify(f"{product['name']} Ajouté (1)", 'success')
-        except Exception as e:
-            self.notify(f'Erreur ajout panier: {e}', 'error')
+        content = MDFloatLayout(size_hint_y=None, height=dp(400))
+        img = FitImage(source=image_source, pos_hint={'center_x': 0.5, 'center_y': 0.5}, radius=[15], size_hint=(1, 1))
+        content.add_widget(img)
+        close_btn = MDIconButton(icon='close-circle', theme_text_color='Custom', text_color=(1, 1, 1, 1), icon_size='40sp', pos_hint={'top': 1, 'right': 1}, on_release=lambda x: self.zoom_dialog.dismiss())
+        content.add_widget(close_btn)
+        self.zoom_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, None))
+        self.zoom_dialog.open()
 
 if __name__ == '__main__':
     try:
