@@ -13,7 +13,6 @@ import threading
 import time
 
 # ==========================================
-# إعدادات التصحيح (Debug)
 DEBUG = True
 if DEBUG:
     os.environ['KIVY_LOG_LEVEL'] = 'info'
@@ -72,7 +71,7 @@ else:
     Config.set('kivy', 'log_enable', 0)
 Config.write()
 
-# مكتبة الباركود (اختيارية لتجنب توقف ويندوز)
+# مكتبة الباركود (اختيارية لتجنب مشاكل ويندوز)
 try:
     from pyzbar.pyzbar import decode
     from PIL import Image as PILImage
@@ -82,10 +81,9 @@ except ImportError:
         print('[WARNING] pyzbar library not found. Barcode scanning will be disabled.')
 
 # ==========================================
-#  NATIVE GPS FIX (ANDROID 12/13/14)
-#  هذا الجزء يعمل فقط على أندرويد ويتم تجاهله في ويندوز
+#  NATIVE GPS FIX (ANDROID 13/14) - المصحح
 # ==========================================
-NativeLocationListener = None  # تعريف أولي لمنع الأخطاء في ويندوز
+NativeLocationListener = None  
 PythonActivity = None
 Context = None
 LocationManager = None
@@ -110,17 +108,28 @@ if platform == 'android':
                 super().__init__()
                 self.callback = callback
 
-            # دالة للأندرويد القديم (< 11)
+            # دالة واحدة تتعامل مع كلتا الحالتين (موقع واحد أو قائمة)
+            # هذا هو الحل للخطأ: Method missing
             @java_method('(Landroid/location/Location;)V')
-            def onLocationChanged(self, location):
-                self.callback(location)
-
-            # دالة للأندرويد الحديث (12/13/14) - حل مشكلة التوقف
             @java_method('(Ljava/util/List;)V')
-            def onLocationChangedList(self, locations):
-                if locations and locations.size() > 0:
-                    # إرسال أحدث موقع في القائمة
-                    self.callback(locations.get(locations.size() - 1))
+            def onLocationChanged(self, args):
+                try:
+                    # التحقق إذا كان المتغير قائمة (List) - لأندرويد 12+
+                    # نحاول استدعاء .size()، إذا نجح فهو قائمة
+                    if hasattr(args, 'size'):
+                        if args.size() > 0:
+                            # نأخذ آخر موقع في القائمة
+                            location = args.get(args.size() - 1)
+                            self.callback(location)
+                    else:
+                        # إذا لم يكن قائمة، فهو موقع فردي (Location) - لأندرويد القديم
+                        self.callback(args)
+                except Exception as e:
+                    # في حال فشل الفحص، نفترض أنه موقع ونمرره
+                    try:
+                        self.callback(args)
+                    except:
+                        print(f"GPS Error parsing: {e}")
 
             @java_method('(Ljava/lang/String;)V')
             def onProviderEnabled(self, provider):
@@ -5707,95 +5716,50 @@ class StockApp(MDApp):
         self.zoom_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, None))
         self.zoom_dialog.open()
 
-    # ---------------------------------------------------------
-    # دوال GPS الجديدة (Native Android Fix)
-    # ---------------------------------------------------------
     def start_gps_service(self):
         if platform != 'android':
             return
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify("تم رفض إذن الموقع GPS", "error")
+                self.notify('تم رفض إذن الموقع GPS', 'error')
                 return
-            
             try:
-                # الحصول على Activity و LocationManager
                 activity = PythonActivity.mActivity
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
-                
-                # إنشاء المستمع
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                
-                # طلب التحديثات (كل 10 ثواني = 10000ms، مسافة 10 متر)
-                # 1. GPS Provider
-                if self.location_manager.isProviderEnabled("gps"):
-                    self.location_manager.requestLocationUpdates(
-                        "gps", 
-                        10000, 
-                        10.0, 
-                        self.location_listener,
-                        Looper.getMainLooper()
-                    )
-                
-                # 2. Network Provider (لتحسين الدقة داخل المباني)
-                if self.location_manager.isProviderEnabled("network"):
-                    self.location_manager.requestLocationUpdates(
-                        "network", 
-                        10000, 
-                        10.0, 
-                        self.location_listener,
-                        Looper.getMainLooper()
-                    )
-                
-                self.notify("GPS Activé (Native)", "success")
-                
+                if self.location_manager.isProviderEnabled('gps'):
+                    self.location_manager.requestLocationUpdates('gps', 10000, 10.0, self.location_listener, Looper.getMainLooper())
+                if self.location_manager.isProviderEnabled('network'):
+                    self.location_manager.requestLocationUpdates('network', 10000, 10.0, self.location_listener, Looper.getMainLooper())
+                self.notify('GPS Activé (Native)', 'success')
             except Exception as e:
-                print(f"GPS Start Error: {e}")
-                self.notify("خطأ في تشغيل GPS", "error")
-
-        # طلب الصلاحيات قبل التشغيل
-        request_permissions(
-            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
-            _start_native_gps
-        )
+                print(f'GPS Start Error: {e}')
+                self.notify('خطأ في تشغيل GPS', 'error')
+        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_native_gps)
 
     def on_native_location(self, location):
-        """يتم استدعاؤها تلقائياً عند تحديث الموقع"""
         try:
             lat = location.getLatitude()
             lon = location.getLongitude()
-            # إرسال للسيرفر
             self.send_location_to_server(lat, lon)
         except Exception as e:
-            print(f"Error parsing location: {e}")
+            print(f'Error parsing location: {e}')
 
     def send_location_to_server(self, lat, lon):
         if not self.current_user_name:
             return
-
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
         data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
 
         def on_success(req, res):
             if DEBUG:
-                print(f"Location sent: {lat}, {lon}")
+                print(f'Location sent: {lat}, {lon}')
 
         def on_fail(req, err):
             if DEBUG:
-                print(f"Location send failed: {err}")
-        
-        # إرسال الطلب في الخلفية
-        UrlRequest(
-            url, 
-            req_body=json.dumps(data), 
-            req_headers={'Content-type': 'application/json'}, 
-            method='POST', 
-            on_success=on_success, 
-            on_failure=on_fail, 
-            on_error=on_fail,
-            timeout=5
-        )
+                print(f'Location send failed: {err}')
+        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
 
 if __name__ == '__main__':
     try:
