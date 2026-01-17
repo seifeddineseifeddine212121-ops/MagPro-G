@@ -20,7 +20,7 @@ android.logcat_filters = *:S python:D
 android.archs = arm64-v8a
 android.allow_backup = True
 android.debug_artifact = apk
-android.uses_cleartext_traffic = 1
+android.manifest.application_attributes = android:usesCleartextTraffic="true"
 
 [buildozer]
 log_level = 2
