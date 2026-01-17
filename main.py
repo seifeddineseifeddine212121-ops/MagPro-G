@@ -11,7 +11,9 @@ import sys
 import textwrap
 import threading
 import time
+
 # ==========================================
+# إعدادات التصحيح (Debug)
 DEBUG = True
 if DEBUG:
     os.environ['KIVY_LOG_LEVEL'] = 'info'
@@ -20,6 +22,7 @@ else:
     os.environ['KIVY_LOG_LEVEL'] = 'error'
     os.environ['KIVY_NO_CONSOLELOG'] = '1'
 # ==========================================
+
 from PIL import Image, ImageDraw, ImageFont
 from bidi.algorithm import get_display
 from datetime import datetime, timedelta
@@ -59,6 +62,7 @@ from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.spinner import MDSpinner
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
+
 # ==========================================
 if DEBUG:
     Config.set('kivy', 'log_level', 'info')
@@ -67,6 +71,8 @@ else:
     Config.set('kivy', 'log_level', 'error')
     Config.set('kivy', 'log_enable', 0)
 Config.write()
+
+# مكتبة الباركود (اختيارية لتجنب توقف ويندوز)
 try:
     from pyzbar.pyzbar import decode
     from PIL import Image as PILImage
@@ -74,15 +80,66 @@ except ImportError:
     decode = None
     if DEBUG:
         print('[WARNING] pyzbar library not found. Barcode scanning will be disabled.')
-    else:
-        pass
+
 # ==========================================
-gps = None
+#  NATIVE GPS FIX (ANDROID 12/13/14)
+#  هذا الجزء يعمل فقط على أندرويد ويتم تجاهله في ويندوز
+# ==========================================
+NativeLocationListener = None  # تعريف أولي لمنع الأخطاء في ويندوز
+PythonActivity = None
+Context = None
+LocationManager = None
+Looper = None
+
 if platform == 'android':
     try:
-        from plyer import gps
-    except ImportError:
-        print('[WARNING] Plyer module not found. GPS will be disabled.')
+        from jnius import autoclass, java_method, PythonJavaClass
+        from android.permissions import request_permissions, Permission
+
+        # استيراد كلاسات أندرويد
+        Context = autoclass('android.content.Context')
+        LocationManager = autoclass('android.location.LocationManager')
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        Looper = autoclass('android.os.Looper')
+
+        # تعريف المستمع الخاص بالموقع (Java Listener)
+        class NativeLocationListener(PythonJavaClass):
+            __javainterfaces__ = ['android/location/LocationListener']
+
+            def __init__(self, callback):
+                super().__init__()
+                self.callback = callback
+
+            # دالة للأندرويد القديم (< 11)
+            @java_method('(Landroid/location/Location;)V')
+            def onLocationChanged(self, location):
+                self.callback(location)
+
+            # دالة للأندرويد الحديث (12/13/14) - حل مشكلة التوقف
+            @java_method('(Ljava/util/List;)V')
+            def onLocationChangedList(self, locations):
+                if locations and locations.size() > 0:
+                    # إرسال أحدث موقع في القائمة
+                    self.callback(locations.get(locations.size() - 1))
+
+            @java_method('(Ljava/lang/String;)V')
+            def onProviderEnabled(self, provider):
+                pass
+
+            @java_method('(Ljava/lang/String;)V')
+            def onProviderDisabled(self, provider):
+                pass
+            
+            @java_method('(Ljava/lang/String;ILandroid/os/Bundle;)V')
+            def onStatusChanged(self, provider, status, extras):
+                pass
+
+    except Exception as e:
+        print(f"[ERROR] Loading Native GPS classes: {e}")
+
+# ==========================================
+# مكتبات أندرويد الإضافية (بلوتوث / صوت)
+# ==========================================
 if platform == 'android':
     try:
         from jnius import autoclass
@@ -94,8 +151,10 @@ if platform == 'android':
     except Exception as e:
         if DEBUG:
             print(f'[ERROR] Android libraries failed to load: {e}')
-        else:
-            pass
+
+# ==========================================
+# تحميل الخطوط
+# ==========================================
 app_dir = os.path.dirname(os.path.abspath(__file__))
 FONT_FILE = os.path.join(app_dir, 'font.ttf')
 custom_font_loaded = False
@@ -112,6 +171,7 @@ try:
         print('[WARNING] Custom font file NOT found. Using fallback.')
 except Exception as e:
     print(f'[ERROR] Critical error loading custom font: {e}')
+
 if not custom_font_loaded:
     fallback_regular = os.path.join(fonts_path, 'Roboto-Regular.ttf')
     fallback_bold = os.path.join(fonts_path, 'Roboto-Bold.ttf')
@@ -119,6 +179,7 @@ if not custom_font_loaded:
         LabelBase.register(name='ArabicFont', fn_regular=fallback_regular, fn_bold=fallback_bold)
     except Exception:
         LabelBase.register(name='ArabicFont', fn_regular=None, fn_bold=None)
+
 # ==========================================
 reshaper = arabic_reshaper.ArabicReshaper(configuration={'delete_harakat': True, 'support_ligatures': True, 'use_unshaped_instead_of_isolated': True})
 # ==========================================
@@ -5646,32 +5707,95 @@ class StockApp(MDApp):
         self.zoom_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, None))
         self.zoom_dialog.open()
 
+    # ---------------------------------------------------------
+    # دوال GPS الجديدة (Native Android Fix)
+    # ---------------------------------------------------------
     def start_gps_service(self):
-        if not gps:
+        if platform != 'android':
             return
-        try:
-            gps.configure(on_location=self.on_gps_location)
-            gps.start(minTime=10000, minDistance=10)
-            self.notify('GPS Activé', 'success')
-        except Exception as e:
-            print(f'GPS Error: {e}')
 
-    def on_gps_location(self, **kwargs):
-        lat = kwargs.get('lat')
-        lon = kwargs.get('lon')
-        if lat and lon:
+        def _start_native_gps(permissions, grants):
+            if not grants or not grants[0]:
+                self.notify("تم رفض إذن الموقع GPS", "error")
+                return
+            
+            try:
+                # الحصول على Activity و LocationManager
+                activity = PythonActivity.mActivity
+                self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
+                
+                # إنشاء المستمع
+                self.location_listener = NativeLocationListener(self.on_native_location)
+                
+                # طلب التحديثات (كل 10 ثواني = 10000ms، مسافة 10 متر)
+                # 1. GPS Provider
+                if self.location_manager.isProviderEnabled("gps"):
+                    self.location_manager.requestLocationUpdates(
+                        "gps", 
+                        10000, 
+                        10.0, 
+                        self.location_listener,
+                        Looper.getMainLooper()
+                    )
+                
+                # 2. Network Provider (لتحسين الدقة داخل المباني)
+                if self.location_manager.isProviderEnabled("network"):
+                    self.location_manager.requestLocationUpdates(
+                        "network", 
+                        10000, 
+                        10.0, 
+                        self.location_listener,
+                        Looper.getMainLooper()
+                    )
+                
+                self.notify("GPS Activé (Native)", "success")
+                
+            except Exception as e:
+                print(f"GPS Start Error: {e}")
+                self.notify("خطأ في تشغيل GPS", "error")
+
+        # طلب الصلاحيات قبل التشغيل
+        request_permissions(
+            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
+            _start_native_gps
+        )
+
+    def on_native_location(self, location):
+        """يتم استدعاؤها تلقائياً عند تحديث الموقع"""
+        try:
+            lat = location.getLatitude()
+            lon = location.getLongitude()
+            # إرسال للسيرفر
             self.send_location_to_server(lat, lon)
+        except Exception as e:
+            print(f"Error parsing location: {e}")
 
     def send_location_to_server(self, lat, lon):
+        if not self.current_user_name:
+            return
+
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
         data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
 
         def on_success(req, res):
-            print('Location sent successfully')
+            if DEBUG:
+                print(f"Location sent: {lat}, {lon}")
 
         def on_fail(req, err):
-            print(f'Location send failed: {err}')
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail)
+            if DEBUG:
+                print(f"Location send failed: {err}")
+        
+        # إرسال الطلب في الخلفية
+        UrlRequest(
+            url, 
+            req_body=json.dumps(data), 
+            req_headers={'Content-type': 'application/json'}, 
+            method='POST', 
+            on_success=on_success, 
+            on_failure=on_fail, 
+            on_error=on_fail,
+            timeout=5
+        )
 
 if __name__ == '__main__':
     try:
