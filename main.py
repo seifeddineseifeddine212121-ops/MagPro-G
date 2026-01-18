@@ -80,15 +80,19 @@ PythonActivity = None
 Context = None
 LocationManager = None
 Looper = None
+
 if platform == 'android':
     try:
-        from jnius import autoclass, java_method, PythonJavaClass
+        from jnius import autoclass, java_method, PythonJavaClass, cast
         from android.permissions import request_permissions, Permission
+        
+        # استيراد الكلاسات الضرورية
         Context = autoclass('android.content.Context')
         LocationManager = autoclass('android.location.LocationManager')
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         Looper = autoclass('android.os.Looper')
 
+        # تعريف المستمع بشكل مبسط وقوي
         class NativeLocationListener(PythonJavaClass):
             __javainterfaces__ = ['android/location/LocationListener']
 
@@ -96,9 +100,17 @@ if platform == 'android':
                 super().__init__()
                 self.callback = callback
 
+            # التعامل مع تغيير الموقع (التوقيع الصحيح ضروري جداً)
             @java_method('(Landroid/location/Location;)V')
             def onLocationChanged(self, location):
                 if location:
+                    self.callback(location)
+
+            @java_method('(Ljava/util/List;)V')
+            def onLocationChangedList(self, locations):
+                # دالة احتياطية لبعض إصدارات أندرويد الحديثة
+                if locations and locations.size() > 0:
+                    location = locations.get(locations.size() - 1)
                     self.callback(location)
 
             @java_method('(Ljava/lang/String;)V')
@@ -113,6 +125,8 @@ if platform == 'android':
             def onStatusChanged(self, provider, status, extras):
                 pass
 
+    except Exception as e:
+        print(f'[ERROR] Loading Native GPS classes: {e}')
 # ==========================================
 if platform == 'android':
     try:
@@ -492,9 +506,6 @@ class StockApp(MDApp):
     current_page_offset = 0
     batch_size = 50
     is_loading_more = False
-
-    def on_pause(self):
-        return True
 
     def fix_text(self, text):
         if not text or not isinstance(text, str):
@@ -5680,39 +5691,57 @@ class StockApp(MDApp):
         self.zoom_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, None))
         self.zoom_dialog.open()
 
+    # ---------------------------------------------------------
+    # دوال GPS المحسنة - انسخ واستبدل الدوال القديمة هنا
+    # ---------------------------------------------------------
+
     def start_gps_service(self):
+        """بدء خدمة GPS مع WakeLock لضمان العمل في الخلفية"""
         if platform != 'android':
             return
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('Permission de localisation refusée', 'error')
+                self.notify('Permission GPS Refusée', 'error')
                 return
+            
             try:
                 activity = PythonActivity.mActivity
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
                 
+                # 1. تفعيل WakeLock لمنع المعالج من النوم (يعمل والشاشة مغلقة)
                 power_manager = activity.getSystemService(Context.POWER_SERVICE)
                 if not hasattr(self, 'wake_lock') or self.wake_lock is None:
+                    # PARTIAL_WAKE_LOCK = 1
                     self.wake_lock = power_manager.newWakeLock(1, "MagPro:GPSLock")
                     self.wake_lock.acquire()
+                    print("DEBUG: WakeLock Acquired")
 
+                # 2. تهيئة المستمع
                 if not hasattr(self, 'location_listener') or self.location_listener is None:
                     self.location_listener = NativeLocationListener(self.on_native_location)
                 
-                self.location_manager.removeUpdates(self.location_listener)
+                # 3. إزالة التحديثات القديمة لتجنب التكرار
+                try:
+                    self.location_manager.removeUpdates(self.location_listener)
+                except:
+                    pass
 
-                min_time = 3000 
-                min_distance = 0.0  
+                # 4. طلب التحديثات (الوقت 2 ثانية، المسافة 0 متر)
+                # المسافة 0 تجبره على التحديث حتى لو الجهاز ثابت
+                min_time = 2000 
+                min_distance = 0.0
                 
                 providers_started = False
                 
+                # محاولة GPS Provider (الأدق)
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates(
                         'gps', min_time, min_distance, self.location_listener, Looper.getMainLooper()
                     )
                     providers_started = True
                 
+                # محاولة Network Provider (يعمل داخل المباني)
                 if self.location_manager.isProviderEnabled('network'):
                     self.location_manager.requestLocationUpdates(
                         'network', min_time, min_distance, self.location_listener, Looper.getMainLooper()
@@ -5720,20 +5749,40 @@ class StockApp(MDApp):
                     providers_started = True
 
                 if providers_started:
-                    self.notify('Service GPS actif (Mise à jour continue)', 'success')
+                    self.notify('GPS Actif (Suivi Continu)', 'success')
                 else:
                     self.notify('Veuillez activer le GPS', 'error')
 
             except Exception as e:
                 print(f'GPS Start Error: {e}')
-                self.notify('Erreur lors du démarrage du GPS', 'error')
+                self.notify(f'Erreur GPS: {e}', 'error')
 
+        # طلب الصلاحيات الضرورية بما في ذلك WakeLock
         request_permissions(
             [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], 
             _start_native_gps
         )
 
+    def stop_gps_service(self):
+        """إيقاف الخدمة وتنظيف الذاكرة"""
+        if platform != 'android':
+            return
+        try:
+            # إيقاف التحديثات
+            if hasattr(self, 'location_manager') and self.location_manager and hasattr(self, 'location_listener'):
+                self.location_manager.removeUpdates(self.location_listener)
+            
+            # تحرير WakeLock لتوفير البطارية عند الإغلاق التام
+            if hasattr(self, 'wake_lock') and self.wake_lock and self.wake_lock.isHeld():
+                self.wake_lock.release()
+                self.wake_lock = None
+                print("DEBUG: WakeLock Released")
+                
+        except Exception as e:
+            print(f'Error stopping GPS: {e}')
+
     def on_native_location(self, location):
+        """استقبال وتوجيه الإحداثيات"""
         try:
             if not location:
                 return
@@ -5741,32 +5790,23 @@ class StockApp(MDApp):
             lat = location.getLatitude()
             lon = location.getLongitude()
             
-            if DEBUG:
-                print(f"GPS Update: {lat}, {lon}")
-
+            # إرسال للسيرفر
             self.send_location_to_server(lat, lon)
+            
         except Exception as e:
             print(f'Error parsing location: {e}')
 
-    def send_location_to_server(self, lat, lon):
-        if not self.current_user_name:
-            if self.store.exists('credentials'):
-                self.current_user_name = self.store.get('credentials').get('username')
-            else:
-                return
-        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-        data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST')
+    def on_stop(self):
+        """يتم استدعاؤها عند إغلاق التطبيق"""
+        # إذا كنت تريد أن يستمر الـ GPS حتى بعد الخروج، لا تستدعِ stop_gps_service هنا.
+        # ولكن الأفضل استدعاؤها لمنع استهلاك البطارية إذا تم قتل التطبيق.
+        # للكود الحالي، سنتركه يعمل في الخلفية (Pause) ونوقفه عند التدمير الكامل.
+        pass 
 
-        def on_success(req, res):
-            if DEBUG:
-                print(f'Location sent: {lat}, {lon}')
-
-        def on_fail(req, err):
-            if DEBUG:
-                print(f'Location send failed: {err}')
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
-
+    def on_pause(self):
+        """يتم استدعاؤها عند تصغير التطبيق"""
+        # نعود بـ True للسماح للتطبيق بالعمل في الخلفية
+        return True
 if __name__ == '__main__':
     try:
         StockApp().run()
