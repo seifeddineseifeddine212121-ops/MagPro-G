@@ -80,7 +80,6 @@ PythonActivity = None
 Context = None
 LocationManager = None
 Looper = None
-
 if platform == 'android':
     try:
         from jnius import autoclass, java_method, PythonJavaClass
@@ -100,7 +99,6 @@ if platform == 'android':
             @java_method('(Ljava/util/List;)V')
             @java_method('(Landroid/location/Location;)V')
             def onLocationChanged(self, args):
-                # استدعاء الدالة عند تغير الموقع
                 try:
                     is_list = False
                     try:
@@ -108,7 +106,6 @@ if platform == 'android':
                             is_list = True
                     except:
                         is_list = False
-                    
                     if is_list:
                         if args.size() > 0:
                             location = args.get(args.size() - 1)
@@ -2402,9 +2399,6 @@ class StockApp(MDApp):
             self.fetch_entities('supplier')
             self.fetch_store_info()
             self.check_and_load_stats()
-            
-            # التعديل هنا: استخدام Clock لجدولة تشغيل الـ GPS بعد ثانية واحدة
-            # هذا يضمن أن الدالة المعدلة (start_gps_service) تعمل ببيئة نظيفة بعد تحميل الشاشة
             if platform == 'android':
                 Clock.schedule_once(lambda dt: self.start_gps_service(), 1)
         else:
@@ -5702,13 +5696,11 @@ class StockApp(MDApp):
         self.zoom_dialog.open()
 
     def on_resume(self):
-        # عند العودة للتطبيق، أعد تشغيل الـ GPS وكأنه يفتح لأول مرة
         if platform == 'android':
             self.start_gps_service()
         return True
 
     def on_stop(self):
-        # تنظيف عند إغلاق التطبيق
         if platform == 'android' and hasattr(self, 'location_manager') and self.location_manager:
             try:
                 if hasattr(self, 'location_listener') and self.location_listener:
@@ -5719,15 +5711,12 @@ class StockApp(MDApp):
     def start_gps_service(self):
         if platform != 'android':
             return
-
-        # التعديل الهام: لا تتوقف إذا كان المدير موجوداً، بل قم بإعادة التعيين
-        # نقوم أولاً بإزالة التحديثات القديمة إذا وجدت لضمان بداية نظيفة
         try:
             if hasattr(self, 'location_manager') and self.location_manager:
                 if hasattr(self, 'location_listener') and self.location_listener:
                     self.location_manager.removeUpdates(self.location_listener)
         except Exception as e:
-            print(f"Error clearing old GPS: {e}")
+            print(f'Error clearing old GPS: {e}')
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
@@ -5736,61 +5725,42 @@ class StockApp(MDApp):
             try:
                 activity = PythonActivity.mActivity
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
-                
-                # تفعيل WakeLock لضمان العمل لفترة أطول (اختياري ولكنه مفيد)
                 try:
                     power_manager = activity.getSystemService(Context.POWER_SERVICE)
                     if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                        self.wake_lock = power_manager.newWakeLock(1, "MagPro:GPSLock")
+                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
                         self.wake_lock.acquire()
                 except Exception as w_err:
-                    print(f"WakeLock error: {w_err}")
-
-                # تعريف Listener جديد في كل مرة
+                    print(f'WakeLock error: {w_err}')
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                
-                min_time = 2000  # تحديث كل ثانيتين (جعلته أسرع قليلاً)
-                min_distance = 0.0 # تحديث مع أي حركة (جعلته 0 لضمان الاستجابة)
-                
+                min_time = 2000
+                min_distance = 0.0
                 providers_started = False
-                
-                # طلب التحديثات من GPS
+                try:
+                    last_known_location = None
+                    if self.location_manager.isProviderEnabled('gps'):
+                        last_known_location = self.location_manager.getLastKnownLocation('gps')
+                    if not last_known_location and self.location_manager.isProviderEnabled('network'):
+                        last_known_location = self.location_manager.getLastKnownLocation('network')
+                    if last_known_location:
+                        self.on_native_location(last_known_location)
+                        print('DEBUG: Last known location sent immediately.')
+                except Exception as e_last:
+                    print(f'Error getting last known location: {e_last}')
                 if self.location_manager.isProviderEnabled('gps'):
-                    self.location_manager.requestLocationUpdates(
-                        'gps', 
-                        int(min_time), 
-                        float(min_distance), 
-                        self.location_listener, 
-                        Looper.getMainLooper()
-                    )
+                    self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
-                
-                # طلب التحديثات من الشبكة أيضاً
                 if self.location_manager.isProviderEnabled('network'):
-                    self.location_manager.requestLocationUpdates(
-                        'network', 
-                        int(min_time), 
-                        float(min_distance), 
-                        self.location_listener, 
-                        Looper.getMainLooper()
-                    )
+                    self.location_manager.requestLocationUpdates('network', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
-
                 if providers_started:
-                    # self.notify('GPS Active (Force Restart)', 'success') # للتجربة فقط
                     pass
                 else:
                     self.notify('Veuillez activer le GPS', 'error')
-
             except Exception as e:
                 print(f'GPS Start Error: {e}')
                 self.notify('Erreur lors du démarrage du GPS', 'error')
-
-        # طلب الصلاحيات وبدء العملية
-        request_permissions(
-            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], 
-            _start_native_gps
-        )
+        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], _start_native_gps)
 
     def on_native_location(self, location):
         try:
