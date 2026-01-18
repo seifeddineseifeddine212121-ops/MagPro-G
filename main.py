@@ -128,6 +128,7 @@ if platform == 'android':
                 pass
     except Exception as e:
         print(f'[ERROR] Loading Native GPS classes: {e}')
+
 # ==========================================
 if platform == 'android':
     try:
@@ -135,6 +136,7 @@ if platform == 'android':
         BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
         BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
         UUID = autoclass('java.util.UUID')
+        PowerManager = autoclass('android.os.PowerManager')
         AudioManager = autoclass('android.media.AudioManager')
         ToneGenerator = autoclass('android.media.ToneGenerator')
     except Exception as e:
@@ -506,6 +508,9 @@ class StockApp(MDApp):
     current_page_offset = 0
     batch_size = 50
     is_loading_more = False
+
+    def on_pause(self):
+        return True
 
     def fix_text(self, text):
         if not text or not isinstance(text, str):
@@ -5695,6 +5700,9 @@ class StockApp(MDApp):
         if platform != 'android':
             return
 
+        if hasattr(self, 'location_manager') and self.location_manager:
+            return
+
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
                 self.notify('Permission de localisation refusée', 'error')
@@ -5702,18 +5710,43 @@ class StockApp(MDApp):
             try:
                 activity = PythonActivity.mActivity
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
+                
+                power_manager = activity.getSystemService(Context.POWER_SERVICE)
+                if not hasattr(self, 'wake_lock'):
+                    self.wake_lock = power_manager.newWakeLock(1, "MagPro:GPSLock")
+                    self.wake_lock.acquire()
+
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                min_time = 3000
-                min_distance = 5.0
+                
+                min_time = 3000 
+                min_distance = 5.0  
+                
+                providers_started = False
                 if self.location_manager.isProviderEnabled('gps'):
-                    self.location_manager.requestLocationUpdates('gps', min_time, min_distance, self.location_listener, Looper.getMainLooper())
+                    self.location_manager.requestLocationUpdates(
+                        'gps', min_time, min_distance, self.location_listener, Looper.getMainLooper()
+                    )
+                    providers_started = True
+                
                 if self.location_manager.isProviderEnabled('network'):
-                    self.location_manager.requestLocationUpdates('network', min_time, min_distance, self.location_listener, Looper.getMainLooper())
-                self.notify('Service GPS Démarré', 'success')
+                    self.location_manager.requestLocationUpdates(
+                        'network', min_time, min_distance, self.location_listener, Looper.getMainLooper()
+                    )
+                    providers_started = True
+
+                if providers_started:
+                    self.notify('Service GPS Démarré (Arrière-plan)', 'success')
+                else:
+                    self.notify('Veuillez activer le GPS', 'error')
+
             except Exception as e:
                 print(f'GPS Start Error: {e}')
                 self.notify('Erreur lors du démarrage du GPS', 'error')
-        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_native_gps)
+
+        request_permissions(
+            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], 
+            _start_native_gps
+        )
 
     def on_native_location(self, location):
         try:
