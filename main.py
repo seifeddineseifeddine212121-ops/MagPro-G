@@ -96,24 +96,10 @@ if platform == 'android':
                 super().__init__()
                 self.callback = callback
 
-            @java_method('(Ljava/util/List;)V')
             @java_method('(Landroid/location/Location;)V')
-            def onLocationChanged(self, args):
-                try:
-                    is_list = False
-                    try:
-                        if args and hasattr(args, 'size') and (args.size() >= 0):
-                            is_list = True
-                    except:
-                        is_list = False
-                    if is_list:
-                        if args.size() > 0:
-                            location = args.get(args.size() - 1)
-                            self.callback(location)
-                    else:
-                        self.callback(args)
-                except Exception as e:
-                    print(f'GPS Error parsing location: {e}')
+            def onLocationChanged(self, location):
+                if location:
+                    self.callback(location)
 
             @java_method('(Ljava/lang/String;)V')
             def onProviderEnabled(self, provider):
@@ -126,8 +112,6 @@ if platform == 'android':
             @java_method('(Ljava/lang/String;ILandroid/os/Bundle;)V')
             def onStatusChanged(self, provider, status, extras):
                 pass
-    except Exception as e:
-        print(f'[ERROR] Loading Native GPS classes: {e}')
 
 # ==========================================
 if platform == 'android':
@@ -5700,9 +5684,6 @@ class StockApp(MDApp):
         if platform != 'android':
             return
 
-        if hasattr(self, 'location_manager') and self.location_manager:
-            return
-
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
                 self.notify('Permission de localisation refusée', 'error')
@@ -5712,16 +5693,20 @@ class StockApp(MDApp):
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
                 
                 power_manager = activity.getSystemService(Context.POWER_SERVICE)
-                if not hasattr(self, 'wake_lock'):
+                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
                     self.wake_lock = power_manager.newWakeLock(1, "MagPro:GPSLock")
                     self.wake_lock.acquire()
 
-                self.location_listener = NativeLocationListener(self.on_native_location)
+                if not hasattr(self, 'location_listener') or self.location_listener is None:
+                    self.location_listener = NativeLocationListener(self.on_native_location)
                 
+                self.location_manager.removeUpdates(self.location_listener)
+
                 min_time = 3000 
-                min_distance = 5.0  
+                min_distance = 0.0  
                 
                 providers_started = False
+                
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates(
                         'gps', min_time, min_distance, self.location_listener, Looper.getMainLooper()
@@ -5735,7 +5720,7 @@ class StockApp(MDApp):
                     providers_started = True
 
                 if providers_started:
-                    self.notify('Service GPS Démarré (Arrière-plan)', 'success')
+                    self.notify('Service GPS actif (Mise à jour continue)', 'success')
                 else:
                     self.notify('Veuillez activer le GPS', 'error')
 
@@ -5750,8 +5735,15 @@ class StockApp(MDApp):
 
     def on_native_location(self, location):
         try:
+            if not location:
+                return
+            
             lat = location.getLatitude()
             lon = location.getLongitude()
+            
+            if DEBUG:
+                print(f"GPS Update: {lat}, {lon}")
+
             self.send_location_to_server(lat, lon)
         except Exception as e:
             print(f'Error parsing location: {e}')
