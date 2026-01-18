@@ -2016,7 +2016,7 @@ class StockApp(MDApp):
 
     def show_add_edit_entity_dialog(self, entity=None):
         if not self.is_server_reachable:
-            self.ae_dialog = MDDialog(title='Hors Ligne', text='Modification des tiers impossible en mode hors ligne.\nVeuillez vous connecter au serveur.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.ae_dialog.dismiss())])
+            self.ae_dialog = MDDialog(title='Hors Ligne', text='Modification impossible en mode hors ligne.\nVeuillez vous connecter au serveur.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.ae_dialog.dismiss())])
             self.ae_dialog.open()
             return
         from kivy.core.clipboard import Clipboard
@@ -2047,7 +2047,7 @@ class StockApp(MDApp):
         header_info.add_widget(MDLabel(text='Identité', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_info.add_widget(header_info)
         card_info.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
-        f_name = SmartTextField(text=val_name, hint_text='Nom Complet / Raison Sociale *', required=True, icon_right='account')
+        f_name = SmartTextField(text=val_name, hint_text='Nom Complet *', required=True, icon_right='account')
         f_activity = SmartTextField(text=val_activity, hint_text='Activité', icon_right='briefcase')
         card_info.add_widget(f_name)
         card_info.add_widget(f_activity)
@@ -2055,20 +2055,20 @@ class StockApp(MDApp):
         card_contact = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.96, 0.98, 1, 1))
         header_contact = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
         header_contact.add_widget(MDIcon(icon='card-account-phone-outline', theme_text_color='Primary', font_size='22sp'))
-        header_contact.add_widget(MDLabel(text='Coordonnées', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
+        header_contact.add_widget(MDLabel(text='Coordonnées & GPS', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_contact.add_widget(header_contact)
         card_contact.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
         f_phone = SmartTextField(text=val_phone, hint_text='Téléphone', input_filter='int', icon_right='phone')
         f_address = SmartTextField(text=val_address, hint_text='Adresse', icon_right='map-marker')
         f_email = SmartTextField(text=val_email, hint_text='Email', icon_right='email')
-        box_gps = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
-        f_gps = SmartTextField(text=val_gps, hint_text='Position GPS (Maps)', icon_right='google-maps', size_hint_x=0.85)
+        gps_box = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
+        f_gps = SmartTextField(text=val_gps, hint_text='Lien GPS (Google Maps)', icon_right='google-maps', size_hint_x=0.85)
         btn_paste_gps = MDIconButton(icon='content-paste', theme_text_color='Custom', text_color=self.theme_cls.primary_color, pos_hint={'center_y': 0.5}, on_release=lambda x: setattr(f_gps, 'text', Clipboard.paste()))
-        box_gps.add_widget(f_gps)
-        box_gps.add_widget(btn_paste_gps)
+        gps_box.add_widget(f_gps)
+        gps_box.add_widget(btn_paste_gps)
         card_contact.add_widget(f_phone)
         card_contact.add_widget(f_address)
-        card_contact.add_widget(box_gps)
+        card_contact.add_widget(gps_box)
         card_contact.add_widget(f_email)
         main_box.add_widget(card_contact)
         f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True, icon_right='tag')
@@ -2094,10 +2094,10 @@ class StockApp(MDApp):
         header_fisc.add_widget(MDLabel(text='Information Fiscale', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_fisc.add_widget(header_fisc)
         card_fisc.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
-        f_rc = SmartTextField(text=val_rc, hint_text='N° Registre Commerce (RC)')
-        f_nif = SmartTextField(text=val_nif, hint_text='N.I.F (Identifiant Fiscal)')
-        f_nis = SmartTextField(text=val_nis, hint_text='N.I.S (Statistique)')
-        f_nai = SmartTextField(text=val_nai, hint_text='N.A.I (Article)')
+        f_rc = SmartTextField(text=val_rc, hint_text='N° RC')
+        f_nif = SmartTextField(text=val_nif, hint_text='N.I.F')
+        f_nis = SmartTextField(text=val_nis, hint_text='N.I.S')
+        f_nai = SmartTextField(text=val_nai, hint_text='N.A.I')
         card_fisc.add_widget(f_rc)
         card_fisc.add_widget(f_nif)
         card_fisc.add_widget(f_nis)
@@ -2109,7 +2109,7 @@ class StockApp(MDApp):
             name_val = f_name.get_value().strip()
             if not name_val:
                 f_name.error = True
-                self.notify('Le nom est obligatoire', 'error')
+                self.notify('Nom obligatoire', 'error')
                 return
             cat_ar = 'تجزئة'
             if self.current_entity_type_mgmt == 'account':
@@ -2120,9 +2120,9 @@ class StockApp(MDApp):
                     cat_ar = 'نصف جملة'
                 else:
                     cat_ar = 'تجزئة'
-            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'gps_location': f_gps.get_value().strip(), 'id': entity.get('id') if is_edit else None}
+            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': f_gps.get_value().strip(), 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
             if self.is_server_reachable:
-                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Enregistré avec succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
+                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
             else:
                 self.notify('Impossible: Mode Hors Ligne', 'error')
         btn_save = MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=1, height=dp(50), elevation=2, on_release=save)
@@ -2131,7 +2131,7 @@ class StockApp(MDApp):
         footer_box.add_widget(btn_cancel)
         main_box.add_widget(footer_box)
         scroll.add_widget(main_box)
-        self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll, buttons=[], size_hint=(0.98, 0.96))
+        self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll, size_hint=(0.98, 0.96))
         self.ae_dialog.open()
 
     def show_price_cat_selector(self, text_field_instance):
@@ -5697,20 +5697,22 @@ class StockApp(MDApp):
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('تم رفض إذن الموقع GPS', 'error')
+                self.notify('Permission de localisation refusée', 'error')
                 return
             try:
                 activity = PythonActivity.mActivity
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
                 self.location_listener = NativeLocationListener(self.on_native_location)
+                min_time = 3000
+                min_distance = 5.0
                 if self.location_manager.isProviderEnabled('gps'):
-                    self.location_manager.requestLocationUpdates('gps', 10000, 10.0, self.location_listener, Looper.getMainLooper())
+                    self.location_manager.requestLocationUpdates('gps', min_time, min_distance, self.location_listener, Looper.getMainLooper())
                 if self.location_manager.isProviderEnabled('network'):
-                    self.location_manager.requestLocationUpdates('network', 10000, 10.0, self.location_listener, Looper.getMainLooper())
-                self.notify('GPS Activé (Native)', 'success')
+                    self.location_manager.requestLocationUpdates('network', min_time, min_distance, self.location_listener, Looper.getMainLooper())
+                self.notify('Service GPS Démarré', 'success')
             except Exception as e:
                 print(f'GPS Start Error: {e}')
-                self.notify('خطأ في تشغيل GPS', 'error')
+                self.notify('Erreur lors du démarrage du GPS', 'error')
         request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_native_gps)
 
     def on_native_location(self, location):
@@ -5723,9 +5725,13 @@ class StockApp(MDApp):
 
     def send_location_to_server(self, lat, lon):
         if not self.current_user_name:
-            return
+            if self.store.exists('credentials'):
+                self.current_user_name = self.store.get('credentials').get('username')
+            else:
+                return
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
         data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
+        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST')
 
         def on_success(req, res):
             if DEBUG:
