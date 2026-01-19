@@ -1264,6 +1264,8 @@ class StockApp(MDApp):
         self.cache_store = load_safe_store('stock_cache.json')
         self.stats_store = load_safe_store('local_stats.json')
         self.store = load_safe_store('app_settings.json')
+        self.gps_store = load_safe_store('gps_logs.json')
+        self.cleanup_old_gps_logs()
         if self.store.exists('config'):
             conf = self.store.get('config')
             self.local_server_ip = conf.get('ip', '192.168.1.100')
@@ -1369,6 +1371,7 @@ class StockApp(MDApp):
 
     def on_start(self):
         print('--- DEBUG: APP STARTING (on_start) ---')
+        Window.bind(on_keyboard=self.on_keyboard)
         self.image_cache_dir = os.path.join(self.user_data_dir, 'img_cache')
         if not os.path.exists(self.image_cache_dir):
             try:
@@ -2332,31 +2335,6 @@ class StockApp(MDApp):
             print(f'Sync Logic Error: {e}')
             Clock.schedule_once(lambda d: self.try_sync_offline_data(), 1)
 
-    def toggle_sync(self):
-        if self.sync_paused:
-            self.execute_toggle_sync()
-            return
-
-        def confirm_stop(x):
-            if self.stop_sync_dialog:
-                self.stop_sync_dialog.dismiss()
-            self.execute_toggle_sync()
-        self.stop_sync_dialog = MDDialog(title='Attention', text="Voulez-vous vraiment arrêter la synchronisation ?\n\nL'application passera en mode HORS LIGNE et ne communiquera plus avec le serveur.", buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: self.stop_sync_dialog.dismiss()), MDRaisedButton(text='ARRÊTER', md_bg_color=(0.8, 0, 0, 1), text_color=(1, 1, 1, 1), on_release=confirm_stop)])
-        self.stop_sync_dialog.open()
-
-    def execute_toggle_sync(self):
-        self.sync_paused = not self.sync_paused
-        action_items = self.dash_toolbar.right_action_items
-        if self.sync_paused:
-            action_items[0] = ['sync-off', lambda x: self.toggle_sync()]
-            self.is_server_reachable = False
-            self.notify('SYNC ARRÊTÉE', 'error')
-        else:
-            action_items[0] = ['sync', lambda x: self.toggle_sync()]
-            self.notify('SYNC ACTIVE... Connexion', 'success')
-            self.check_server_heartbeat(0)
-        self.dash_toolbar.right_action_items = action_items
-
     def notify(self, text, type='info'):
         if not self.status_bar_label:
             return
@@ -2483,10 +2461,22 @@ class StockApp(MDApp):
         screen.add_widget(layout)
         return screen
 
+    def open_delivery_map(self):
+        if not self.is_server_reachable:
+            self.notify('Serveur inaccessible (Hors Ligne)', 'error')
+            return
+        import webbrowser
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/delivery_map/{self.current_user_name}'
+        self.notify('Ouverture de la carte...', 'info')
+        try:
+            webbrowser.open(url)
+        except Exception as e:
+            self.notify(f'Erreur ouverture navigateur: {e}', 'error')
+
     def _build_dashboard_screen(self):
         screen = MDScreen(name='dashboard')
         layout = MDBoxLayout(orientation='vertical')
-        self.dash_toolbar = MDTopAppBar(title='Accueil', left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]], right_action_items=[['sync', lambda x: self.toggle_sync()], ['logout', lambda x: self.logout()]])
+        self.dash_toolbar = MDTopAppBar(title='Accueil', left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]], right_action_items=[['map', lambda x: self.open_delivery_map()], ['logout', lambda x: self.logout()]])
         layout.add_widget(self.dash_toolbar)
         scroll = MDScrollView()
         self.main_dash_content = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(20), padding=dp(15))
@@ -5766,28 +5756,86 @@ class StockApp(MDApp):
         try:
             lat = location.getLatitude()
             lon = location.getLongitude()
-            self.send_location_to_server(lat, lon)
+            accuracy = location.getAccuracy()
+            if accuracy > 50:
+                return
+            timestamp = time.time()
+            date_str = str(datetime.now().date())
+            key = f'{int(timestamp)}_{random.randint(100, 999)}'
+            self.gps_store.put(key, lat=lat, lon=lon, timestamp=timestamp, date=date_str, synced=False)
+            self.sync_gps_data()
         except Exception as e:
             print(f'Error parsing location: {e}')
 
-    def send_location_to_server(self, lat, lon):
+    def sync_gps_data(self):
+        if not self.is_server_reachable or self.sync_paused:
+            return
         if not self.current_user_name:
             if self.store.exists('credentials'):
                 self.current_user_name = self.store.get('credentials').get('username')
             else:
                 return
-        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-        data = {'username': self.current_user_name, 'lat': lat, 'lon': lon}
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST')
+        unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k)['synced']]
+        unsynced_keys.sort(key=lambda k: self.gps_store.get(k)['timestamp'])
+        if unsynced_keys:
+            key = unsynced_keys[0]
+            item = self.gps_store.get(key)
+            url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
+            payload = {'username': self.current_user_name, 'lat': item['lat'], 'lon': item['lon'], 'timestamp': item['timestamp']}
 
-        def on_success(req, res):
-            if DEBUG:
-                print(f'Location sent: {lat}, {lon}')
+            def on_success(req, res):
+                item['synced'] = True
+                self.gps_store.put(key, **item)
+                self.sync_gps_data()
 
-        def on_fail(req, err):
-            if DEBUG:
-                print(f'Location send failed: {err}')
-        UrlRequest(url, req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+            def on_fail(req, err):
+                print(f'[GPS] Sync failed for {key}: {err}')
+            UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+
+    def on_keyboard(self, window, key, scancode, codepoint, modifier):
+        if key == 27:
+            self.handle_back_button()
+            return True
+        return False
+
+    def handle_back_button(self):
+        if hasattr(self, 'scan_dialog') and self.scan_dialog:
+            self.close_barcode_scanner()
+            return
+        dialogs = ['dialog', 'ae_dialog', 'pay_dialog', 'entity_dialog', 'mgmt_dialog', 'srv_dialog', 'pending_dialog', 'bt_dialog', 'filter_dialog', 'options_dialog', 'cat_dialog', 'auth_dialog', 'toggle_dialog', 'logout_diag', 'stop_sync_dialog', 'confirm_del_dialog', 'overpay_dialog', 'debt_dialog']
+        for d_name in dialogs:
+            d = getattr(self, d_name, None)
+            if d:
+                d.dismiss()
+                setattr(self, d_name, None)
+                return
+        current_screen = self.sm.current
+        if current_screen == 'cart':
+            self.back_to_products()
+        elif current_screen == 'products':
+            self.go_back()
+        elif current_screen == 'dashboard' or current_screen == 'login':
+            self.show_exit_confirmation()
+
+    def show_exit_confirmation(self):
+        self.exit_dialog = MDDialog(title='Attention', text="Voulez-vous vraiment quitter l'application ?", buttons=[MDFlatButton(text='NON', on_release=lambda x: self.exit_dialog.dismiss()), MDRaisedButton(text='OUI, QUITTER', md_bg_color=(0.8, 0, 0, 1), text_color=(1, 1, 1, 1), on_release=self.stop)])
+        self.exit_dialog.open()
+
+    def cleanup_old_gps_logs(self):
+        try:
+            today_str = str(datetime.now().date())
+            keys_to_delete = []
+            for key in self.gps_store.keys():
+                item = self.gps_store.get(key)
+                item_date = item.get('date')
+                if item_date != today_str:
+                    keys_to_delete.append(key)
+            for k in keys_to_delete:
+                self.gps_store.delete(k)
+            if keys_to_delete:
+                print(f'[GPS] Cleaned {len(keys_to_delete)} old points.')
+        except Exception as e:
+            print(f'[GPS] Cleanup Error: {e}')
 
 if __name__ == '__main__':
     try:
