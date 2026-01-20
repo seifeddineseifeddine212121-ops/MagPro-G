@@ -485,6 +485,71 @@ class ProductRecycleView(RecycleView):
                 self.loading_lock = True
                 app.load_more_products()
 
+# ==========================================
+# CLASSES POUR LE MODE LIVRAISON (OFFLINE)
+# ضع هذا الكود قبل class StockApp(MDApp):
+# ==========================================
+
+class DeliveryRecycleItem(RecycleDataViewBehavior, MDBoxLayout):
+    index = None
+    customer_name = StringProperty("")
+    address = StringProperty("")
+    balance_text = StringProperty("")
+    icon = StringProperty("map-marker")
+    icon_color = ListProperty([0.5, 0.5, 0.5, 1])
+    bg_color = ListProperty([1, 1, 1, 1])
+    action_text = StringProperty("Confirmer")
+    action_color = ListProperty([0, 0.7, 0, 1])
+    is_delivered = BooleanProperty(False)
+    gps_data = StringProperty("")
+    entity_id = StringProperty("")
+
+    def refresh_view_attrs(self, rv, index, data):
+        self.index = index
+        self.customer_name = data.get('name', '')
+        self.address = data.get('address', 'Position Inconnue')
+        self.balance_text = data.get('balance_text', '')
+        self.is_delivered = data.get('is_delivered', False)
+        self.gps_data = data.get('gps', '')
+        self.entity_id = str(data.get('id', ''))
+        
+        # تغيير الألوان والنصوص (Mise à jour visuelle)
+        if self.is_delivered:
+            self.icon = "check-circle"
+            self.icon_color = [0, 0.7, 0, 1] # Vert (Succès)
+            self.bg_color = [0.9, 1, 0.9, 1] # Fond Vert clair
+            self.action_text = "Livré"
+            self.action_color = [0.5, 0.5, 0.5, 1] # Gris (Désactivé)
+        else:
+            self.icon = "truck-delivery"
+            self.icon_color = [0.2, 0.2, 0.2, 1]
+            self.bg_color = [1, 1, 1, 1] # Fond Blanc
+            self.action_text = "Confirmer"
+            self.action_color = [0, 0.6, 0.8, 1] # Bleu (Action)
+            
+        return super().refresh_view_attrs(rv, index, data)
+
+    def on_tap_map(self):
+        # فتح الخريطة (Ouvrir Google Maps)
+        app = MDApp.get_running_app()
+        if self.gps_data:
+            app.open_client_location(self.gps_data)
+        else:
+            app.notify("Pas de GPS", "error")
+
+    def on_action_tap(self):
+        # تأكيد التوصيل (Confirmer la livraison)
+        if not self.is_delivered:
+            app = MDApp.get_running_app()
+            app.confirm_delivery_action(self.entity_id, self.customer_name)
+
+class DeliveryScreen(MDScreen):
+    pass
+
+# ==========================================
+# END OF DELIVERY CLASSES
+# ==========================================
+
 class StockApp(MDApp):
     cart = []
     all_products_raw = []
@@ -538,6 +603,130 @@ class StockApp(MDApp):
     current_page_offset = 0
     batch_size = 50
     is_loading_more = False
+
+    def open_delivery_mode(self):
+        self.sm.transition.direction = 'left'
+        self.sm.current = 'delivery'
+        self.refresh_delivery_list() # عرض الكاش فوراً
+        
+        # محاولة التحديث من السيرفر في الخلفية إذا كان متصلاً
+        if self.is_server_reachable:
+            threading.Thread(target=self.fetch_delivery_data, daemon=True).start()
+
+    def fetch_delivery_data(self):
+        """جلب البيانات من السيرفر وتخزينها محلياً للاستخدام Offline"""
+        try:
+            # طلب البيانات من السيرفر
+            url = f"http://{self.active_server_ip}:{DEFAULT_PORT}/api/map_data?username={self.current_user_name}"
+            
+            def on_success(req, result):
+                if result and 'customers' in result:
+                    # حفظ البيانات في ملف محلي (الكاش)
+                    self.delivery_store.put('customers_data', data=result['customers'], timestamp=time.time())
+                    self.notify("Carte client mise à jour (Cache)", "success")
+                    self.refresh_delivery_list() # تحديث الواجهة بالبيانات الجديدة
+            
+            UrlRequest(url, on_success=on_success)
+        except Exception as e:
+            print(f"Fetch Error: {e}")
+
+    @mainthread
+    def refresh_delivery_list(self, filter_text=""):
+        """قراءة البيانات من الملف المحلي + العمليات المعلقة Offline"""
+        # 1. تحميل الزبائن من الذاكرة المحلية (Cache)
+        if not self.delivery_store.exists('customers_data'):
+            customers = []
+        else:
+            customers = self.delivery_store.get('customers_data')['data']
+            
+        # 2. معرفة من تم توصيله في وضع Offline ولم يرسل للسيرفر بعد
+        pending_deliveries = []
+        for key in self.offline_store.keys():
+            item = self.offline_store.get(key)
+            # التحقق إذا كانت العملية هي 'delivery_confirm' وغير متزامنة
+            if not item.get('synced') and item.get('order_data', {}).get('type') == 'delivery_confirm':
+                pending_deliveries.append(str(item['order_data']['entity_id']))
+
+        rv_data = []
+        for c in customers:
+            c_name = self.fix_text(c.get('name', ''))
+            # الفلترة (البحث)
+            if filter_text and filter_text.lower() not in c_name.lower():
+                continue
+                
+            # التحقق من حالة التوصيل (هل هو موصل في السيرفر أو محلياً؟)
+            is_delivered_server = c.get('is_delivered', False)
+            is_delivered_local = str(c.get('id')) in pending_deliveries
+            
+            # تجهيز رابط GPS للعمل Offline (Geo URI يفتح التطبيق مباشرة)
+            gps_loc = ""
+            if c.get('lat') and c.get('lon'):
+                gps_loc = f"geo:{c['lat']},{c['lon']}?q={c['lat']},{c['lon']}({c_name})"
+            
+            rv_data.append({
+                'name': c_name,
+                'address': self.fix_text(c.get('address', '')),
+                'balance_text': f"{c.get('balance', 0)} DA",
+                'is_delivered': is_delivered_server or is_delivered_local, # إذا تم التوصيل في أي منهما
+                'gps': gps_loc,
+                'id': str(c.get('id'))
+            })
+            
+        # الترتيب: غير الموصل أولاً
+        rv_data.sort(key=lambda x: x['is_delivered'])
+        
+        # تحديث الشاشة
+        screen = self.sm.get_screen('delivery')
+        if screen:
+            rv = screen.ids.rv_delivery
+            rv.data = rv_data
+            rv.refresh_from_data()
+
+    def filter_delivery_list(self, text):
+        self.refresh_delivery_list(filter_text=text)
+
+    def confirm_delivery_action(self, entity_id, customer_name):
+        """حفظ عملية التوصيل محلياً أولاً (Offline First) ثم محاولة المزامنة"""
+        # تجهيز البيانات
+        data = {
+            'type': 'delivery_confirm', # نوع عملية جديد خاص بالتوصيل
+            'entity_id': entity_id,
+            'driver': self.current_user_name,
+            'timestamp': str(datetime.now())
+        }
+        
+        # الحفظ في المخزن المحلي (Offline Store) بمفتاح فريد
+        key_name = f"DLV_{int(time.time())}_{entity_id}"
+        # نستخدم دالة الحفظ الموجودة في التطبيق ولكن نمرر المفتاح يدوياً إذا لزم الأمر
+        # هنا سنستخدم الـ offline_store مباشرة لضمان عدم التعارض
+        self.offline_store.put(key_name, order_data=data, synced=False, sync_timestamp=0)
+        
+        # تحديث الواجهة فوراً ليرى السائق العلامة الخضراء
+        self.notify(f"Livré: {customer_name} (Sauvegardé)", "success")
+        self.refresh_delivery_list()
+        
+        # محاولة المزامنة إذا كان هناك إنترنت
+        if self.is_server_reachable:
+            self.try_sync_offline_data()
+
+    def manual_sync_delivery(self):
+        """زر التحديث اليدوي"""
+        if self.is_server_reachable:
+            self.notify("Synchronisation...", "info")
+            threading.Thread(target=self.fetch_delivery_data, daemon=True).start() # جلب الجديد
+            self.try_sync_offline_data() # إرسال القديم
+        else:
+            self.notify("Pas de connexion (Mode Hors Ligne)", "warning")
+            self.refresh_delivery_list()
+
+    def open_all_map_link(self):
+        """فتح رابط الخريطة الشاملة (يتطلب إنترنت)"""
+        if self.is_server_reachable:
+             import webbrowser
+             url = f"http://{self.active_server_ip}:{DEFAULT_PORT}/delivery_map/{self.current_user_name}"
+             webbrowser.open(url)
+        else:
+             self.notify("Carte en direct nécessite Internet", "error")
 
     def _extract_coordinates(self, text):
         if not text:
@@ -1296,60 +1485,103 @@ class StockApp(MDApp):
         return (round(total_ht, 2), round(total_tva, 2))
 
     def build(self):
+        # تحميل واجهة المستخدم من متغير KV_BUILDER
         Builder.load_string(KV_BUILDER)
+        
         self.title = 'MagPro Gestion de Stock'
         self._search_event = None
         self._entity_search_event = None
-        self.theme_cls.primary_palette = 'Blue'
-        self.theme_cls.accent_palette = 'Amber'
-        self.theme_cls.theme_style = 'Light'
-        self.theme_cls.font_styles['H4'] = ['ArabicFont', 34, False, 0.25]
-        self.theme_cls.font_styles['H5'] = ['ArabicFont', 24, False, 0]
-        self.theme_cls.font_styles['H6'] = ['ArabicFont', 20, False, 0.15]
-        self.theme_cls.font_styles['Subtitle1'] = ['ArabicFont', 16, False, 0.15]
-        self.theme_cls.font_styles['Subtitle2'] = ['ArabicFont', 14, False, 0.1]
-        self.theme_cls.font_styles['Body1'] = ['ArabicFont', 16, False, 0.5]
-        self.theme_cls.font_styles['Body2'] = ['ArabicFont', 14, False, 0.25]
-        self.theme_cls.font_styles['Button'] = ['ArabicFont', 14, True, 1.25]
-        self.theme_cls.font_styles['Caption'] = ['ArabicFont', 12, False, 0.4]
+        
+        # إعدادات الثيم والألوان
+        self.theme_cls.primary_palette = "Blue"
+        self.theme_cls.accent_palette = "Amber"
+        self.theme_cls.theme_style = "Light"
+        
+        # تعريف أنماط الخطوط (لضمان ظهور العربية والفرنسية بشكل جيد)
+        self.theme_cls.font_styles["H4"] = ["ArabicFont", 34, False, 0.25]
+        self.theme_cls.font_styles["H5"] = ["ArabicFont", 24, False, 0]
+        self.theme_cls.font_styles["H6"] = ["ArabicFont", 20, False, 0.15]
+        self.theme_cls.font_styles["Subtitle1"] = ["ArabicFont", 16, False, 0.15]
+        self.theme_cls.font_styles["Subtitle2"] = ["ArabicFont", 14, False, 0.1]
+        self.theme_cls.font_styles["Body1"] = ["ArabicFont", 16, False, 0.5]
+        self.theme_cls.font_styles["Body2"] = ["ArabicFont", 14, False, 0.25]
+        self.theme_cls.font_styles["Button"] = ["ArabicFont", 14, True, 1.25]
+        self.theme_cls.font_styles["Caption"] = ["ArabicFont", 12, False, 0.4]
+
+        # تحديد مسار بيانات التطبيق
         self.data_dir = self.user_data_dir
 
+        # دالة مساعدة لتحميل ملفات JsonStore بأمان
         def load_safe_store(filename):
             path = os.path.join(self.data_dir, filename)
             try:
                 return JsonStore(path)
             except Exception as e:
-                print(f'[CORRUPTION DETECTED] Resetting {filename} due to error: {e}')
+                print(f"[CORRUPTION DETECTED] Resetting {filename} due to error: {e}")
                 try:
                     if os.path.exists(path):
                         os.remove(path)
-                except:
-                    pass
+                except: pass
                 return JsonStore(path)
-        self.offline_store = load_safe_store('stock_pending_orders.json')
-        self.cache_store = load_safe_store('stock_cache.json')
-        self.stats_store = load_safe_store('local_stats.json')
-        self.store = load_safe_store('app_settings.json')
-        self.gps_store = load_safe_store('gps_logs.json')
+
+        # تهيئة ملفات التخزين
+        self.offline_store = load_safe_store('stock_pending_orders.json') # العمليات المعلقة
+        self.cache_store = load_safe_store('stock_cache.json')           # كاش المنتجات والزبائن
+        self.stats_store = load_safe_store('local_stats.json')           # الإحصائيات
+        self.store = load_safe_store('app_settings.json')                # الإعدادات
+        self.gps_store = load_safe_store('gps_logs.json')                # سجلات GPS
+        
+        # --- [جديد] ملف كاش خاص بوضع التوصيل Offline ---
+        self.delivery_store = load_safe_store('delivery_cache.json')
+
+        # تنظيف سجلات GPS القديمة
         self.cleanup_old_gps_logs()
+
+        # تحميل الإعدادات المحفوظة
         if self.store.exists('config'):
             conf = self.store.get('config')
             self.local_server_ip = conf.get('ip', '192.168.1.100')
             self.external_server_ip = conf.get('ext_ip', '')
             self.is_seller_mode = conf.get('seller_mode', False)
             self.active_server_ip = self.local_server_ip
+
+        # بناء الهيكل الرئيسي للواجهة
         self.root_box = MDBoxLayout(orientation='vertical')
+        
+        # مدير الشاشات (Screen Manager)
         self.sm = MDScreenManager()
-        self.sm.add_widget(self._build_login_screen())
-        self.sm.add_widget(self._build_dashboard_screen())
-        self.sm.add_widget(self._build_products_screen())
-        self.sm.add_widget(self._build_cart_screen())
+        self.sm.add_widget(self._build_login_screen())      # شاشة الدخول
+        self.sm.add_widget(self._build_dashboard_screen())  # لوحة التحكم
+        self.sm.add_widget(self._build_products_screen())   # شاشة المنتجات
+        self.sm.add_widget(self._build_cart_screen())       # شاشة السلة
+        
+        # --- [جديد] إضافة شاشة التوصيل ---
+        self.sm.add_widget(DeliveryScreen(name='delivery'))
+
         self.root_box.add_widget(self.sm)
-        self.status_bar_bg = MDCard(size_hint_y=None, height=dp(40), radius=[0], md_bg_color=(0.2, 0.2, 0.2, 1), elevation=0)
-        self.status_bar_label = MDLabel(text='Initialisation...', halign='center', theme_text_color='Custom', text_color=(1, 1, 1, 1), font_style='Caption', bold=True)
+
+        # شريط الحالة السفلي (Status Bar)
+        self.status_bar_bg = MDCard(
+            size_hint_y=None, 
+            height=dp(40), 
+            radius=[0], 
+            md_bg_color=(0.2, 0.2, 0.2, 1), 
+            elevation=0
+        )
+        self.status_bar_label = MDLabel(
+            text="Initialisation...", 
+            halign="center", 
+            theme_text_color="Custom", 
+            text_color=(1, 1, 1, 1), 
+            font_style="Caption", 
+            bold=True
+        )
         self.status_bar_bg.add_widget(self.status_bar_label)
         self.root_box.add_widget(self.status_bar_bg)
+
+        # بدء فحص الاتصال بالسيرفر (Heartbeat)
         self._heartbeat_event = Clock.schedule_interval(self.check_server_heartbeat, 5)
+
         return self.root_box
 
     def get_device_id(self):
@@ -2390,39 +2622,75 @@ class StockApp(MDApp):
             return
         if not self.is_server_reachable:
             return
+            
+        # جلب المفاتيح غير المتزامنة
         keys = list(self.offline_store.keys())
         unsynced = [k for k in keys if not self.offline_store.get(k).get('synced', False)]
+        
         if not unsynced:
             self._reset_notification_state(0)
             return
-        sorted_keys = sorted(unsynced, key=lambda x: int(x.split('_')[0]) if x.split('_')[0].isdigit() else 0)
+            
+        # ترتيب حسب القدم
+        sorted_keys = sorted(unsynced, key=lambda x: int(x.split('_')[1]) if len(x.split('_')) > 1 and x.split('_')[1].isdigit() else 0)
         key = sorted_keys[0]
+        
         try:
             item_data = self.offline_store.get(key)
             data = item_data['order_data']
-            endpoint = '/api/submit_payment' if data.get('is_simple_payment') else '/api/submit_order'
+            
+            # --- تحديد الرابط ونوع البيانات (المنطق الجديد) ---
+            endpoint = '/api/submit_order' # الرابط الافتراضي (فواتير)
+            payload = data
+            
+            if data.get('is_simple_payment'):
+                endpoint = '/api/submit_payment' # رابط الدفعات
+            elif data.get('type') == 'delivery_confirm':
+                # رابط تأكيد التوصيل
+                endpoint = '/api/mark_delivered'
+                # تحويل البيانات للشكل الذي يقبله السيرفر
+                payload = {'id': data['entity_id'], 'driver': data.get('driver', self.current_user_name)}
 
-            def next_step(*args):
-                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 0.5)
-
+            # دالة النجاح
             def success(r, res):
                 item_data['synced'] = True
                 item_data['sync_timestamp'] = time.time()
+                # تحديث المعرفات إذا عادت من السيرفر (للفواتير)
                 if res.get('server_id'):
                     item_data['order_data']['server_id'] = res.get('server_id')
-                if res.get('invoice_number'):
-                    item_data['order_data']['invoice_number'] = res.get('invoice_number')
+                
                 self.offline_store.put(key, **item_data)
-                self.notify(f"Sync OK: {data.get('doc_type', 'Op')}", 'success')
-                next_step()
+                
+                # إشعار حسب النوع
+                if data.get('type') == 'delivery_confirm':
+                    self.notify("Livraison Synchronisée ✅", "success")
+                else:
+                    self.notify("Données Synchronisées ✅", "success")
+                
+                # الانتقال للعنصر التالي
+                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 0.5)
 
+            # دالة الفشل
             def failure(req, err):
                 print(f'Sync Fail for {key}: {err}')
-                next_step()
-            UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=success, on_failure=failure, on_error=failure, timeout=10)
+                # المحاولة لاحقاً
+                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 2)
+
+            # إرسال الطلب
+            UrlRequest(
+                f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', 
+                req_body=json.dumps(payload), 
+                req_headers={'Content-type': 'application/json'}, 
+                method='POST', 
+                on_success=success, 
+                on_failure=failure, 
+                on_error=failure, 
+                timeout=10
+            )
+            
         except Exception as e:
             print(f'Sync Logic Error: {e}')
-            Clock.schedule_once(lambda d: self.try_sync_offline_data(), 1)
+            Clock.schedule_once(lambda d: self.try_sync_offline_data(), 2)
 
     def notify(self, text, type='info'):
         if not self.status_bar_label:
