@@ -170,7 +170,533 @@ reshaper = arabic_reshaper.ArabicReshaper(configuration={'delete_harakat': True,
 # ==========================================
 DEFAULT_PORT = '5000'
 # ==========================================
-KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
+KV_BUILDER = '''
+<LeftButtonsContainer>:
+    adaptive_width: True
+    spacing: "4dp"
+    padding: "4dp"
+    pos_hint: {"center_y": .5}
+
+<RightButtonsContainer>:
+    adaptive_width: True
+    spacing: "8dp"
+    pos_hint: {"center_y": .5}
+
+<CustomHistoryItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(80)
+    padding: dp(10)
+    spacing: dp(5)
+    radius: [10]
+    elevation: 1
+    ripple_behavior: True
+    md_bg_color: root.bg_color
+    on_release: root.on_tap_action()
+    
+    MDIcon:
+        icon: root.icon
+        theme_text_color: "Custom"
+        text_color: root.icon_color
+        pos_hint: {"center_y": .5}
+        font_size: "32sp"
+        size_hint_x: None
+        width: dp(40)
+        
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {"center_y": .5}
+        spacing: dp(4)
+        size_hint_x: 0.5
+        
+        MDLabel:
+            text: root.text
+            bold: True
+            font_style: "Subtitle1"
+            font_size: "16sp"
+            theme_text_color: "Primary"
+            shorten: True
+            shorten_from: 'right'
+            font_name: 'ArabicFont'
+            markup: True
+            
+        MDLabel:
+            text: root.secondary_text
+            font_style: "Caption"
+            theme_text_color: "Secondary"
+            font_name: 'ArabicFont'
+            
+    MDLabel:
+        text: root.right_text
+        halign: "right"
+        pos_hint: {"center_y": .5}
+        font_style: "Subtitle2"
+        bold: True
+        theme_text_color: "Custom"
+        text_color: root.icon_color
+        size_hint_x: 0.3
+        font_name: 'ArabicFont'
+
+    MDIconButton:
+        icon: "pencil"
+        theme_text_color: "Custom"
+        text_color: (0, 0.5, 0.8, 1)
+        pos_hint: {"center_y": .5}
+        on_release: root.on_edit_action()
+
+<ProductRecycleItem>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(90)
+    padding: 0
+    spacing: 0
+    
+    MDCard:
+        orientation: 'horizontal'
+        padding: dp(10)
+        spacing: dp(10)
+        radius: [8]
+        elevation: 1
+        ripple_behavior: True
+        on_release: root.on_tap()
+        md_bg_color: (1, 1, 1, 1)
+        
+        MDCard:
+            size_hint: None, None
+            size: dp(50), dp(50)
+            radius: [5]
+            elevation: 0
+            md_bg_color: (0, 0, 0, 0)
+            pos_hint: {'center_y': .5}
+            ripple_behavior: True
+            on_release: root.on_image_tap()
+            
+            MDFloatLayout:
+                MDIcon:
+                    icon: root.icon_name
+                    theme_text_color: "Custom"
+                    text_color: root.icon_color
+                    pos_hint: {'center_x': .5, 'center_y': .5}
+                    font_size: '32sp'
+                    opacity: 1 if not root.image_source else 0
+
+                FitImage:
+                    source: root.image_source
+                    radius: [5]
+                    pos_hint: {'center_x': .5, 'center_y': .5}
+                    opacity: 1 if root.image_source else 0
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            pos_hint: {'center_y': .5}
+            spacing: dp(5)
+            
+            MDLabel:
+                text: root.text_name
+                font_style: "Subtitle1"
+                bold: True
+                text_size: self.width, None
+                max_lines: 2
+                halign: 'left'
+                font_size: '17sp'
+                theme_text_color: "Custom"
+                text_color: (0.1, 0.1, 0.1, 1)
+                font_name: 'ArabicFont'
+            
+            MDBoxLayout:
+                orientation: 'horizontal'
+                spacing: dp(10)
+                
+                MDLabel:
+                    text: root.text_price
+                    font_style: "H6"
+                    theme_text_color: "Custom"
+                    text_color: root.price_color
+                    bold: True
+                    size_hint_x: 0.6
+                    font_size: '20sp'
+                    font_name: 'ArabicFont'
+                
+                MDLabel:
+                    text: root.text_stock
+                    theme_text_color: "Custom"
+                    text_color: (0.1, 0.1, 0.1, 1)
+                    halign: 'right'
+                    size_hint_x: 0.4
+                    bold: True
+                    font_size: '16sp'
+                    font_name: 'ArabicFont'
+
+<ProductRecycleView>:
+    viewclass: 'ProductRecycleItem'
+    RecycleBoxLayout:
+        default_size: None, dp(95)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(4)
+        padding: dp(5)
+
+<HistoryRecycleItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(80)
+    padding: dp(10)
+    spacing: dp(5)
+    radius: [10]
+    elevation: 1
+    ripple_behavior: True
+    md_bg_color: root.bg_color
+    on_release: root.on_tap()
+
+    MDIcon:
+        icon: root.icon_name
+        theme_text_color: "Custom"
+        text_color: root.icon_color
+        pos_hint: {"center_y": .5}
+        font_size: "32sp"
+        size_hint_x: None
+        width: dp(40)
+
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {"center_y": .5}
+        spacing: dp(4)
+        size_hint_x: 1
+
+        MDLabel:
+            text: root.text_primary
+            bold: True
+            font_style: "Subtitle1"
+            font_size: "16sp"
+            theme_text_color: "Primary"
+            text_size: self.width, None
+            halign: 'left'
+            font_name: 'ArabicFont'
+            markup: True
+
+        MDLabel:
+            text: root.text_secondary
+            font_style: "Caption"
+            theme_text_color: "Secondary"
+            font_name: 'ArabicFont'
+
+    MDLabel:
+        text: root.text_amount
+        halign: "right"
+        pos_hint: {"center_y": .5}
+        font_style: "Subtitle2"
+        bold: True
+        theme_text_color: "Custom"
+        text_color: root.icon_color
+        size_hint_x: None
+        width: dp(110)
+        font_name: 'ArabicFont'
+
+<HistoryRecycleView>:
+    viewclass: 'HistoryRecycleItem'
+    RecycleBoxLayout:
+        default_size: None, dp(85)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(5)
+        padding: dp(5)
+
+<EntityRecycleItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(80)
+    padding: dp(10)
+    spacing: dp(15)
+    ripple_behavior: True
+    md_bg_color: (1, 1, 1, 1)
+    radius: [0]
+    on_release: root.on_tap()
+
+    MDIcon:
+        icon: root.icon_name
+        theme_text_color: "Custom"
+        text_color: root.icon_color
+        pos_hint: {"center_y": .5}
+        font_size: "32sp"
+        size_hint_x: None
+        width: dp(40)
+
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {"center_y": .5}
+        size_hint_x: 1
+        spacing: dp(4)
+
+        MDLabel:
+            text: root.text_name
+            bold: True
+            font_style: "Subtitle1"
+            font_name: 'ArabicFont'
+            theme_text_color: "Custom"
+            text_color: (0.1, 0.1, 0.1, 1)
+            shorten: True
+            shorten_from: 'right'
+            valign: 'center'
+
+        MDLabel:
+            text: root.text_balance
+            font_style: "Caption"
+            font_name: 'ArabicFont'
+            markup: True
+            theme_text_color: "Secondary"
+            valign: 'top'
+
+<EntityRecycleView>:
+    viewclass: 'EntityRecycleItem'
+    RecycleBoxLayout:
+        default_size: None, dp(80)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(2)
+        padding: dp(0)
+
+<MgmtEntityRecycleItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(80)
+    padding: dp(10)
+    spacing: dp(5)
+    ripple_behavior: True
+    md_bg_color: (1, 1, 1, 1)
+    on_release: root.on_pay()
+
+    MDIcon:
+        icon: "account-circle"
+        theme_text_color: "Custom"
+        text_color: (0.5, 0.5, 0.5, 1)
+        pos_hint: {"center_y": .5}
+        font_size: "32sp"
+        size_hint_x: None
+        width: dp(40)
+
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {"center_y": .5}
+        size_hint_x: 1
+        spacing: dp(2)
+        padding: [dp(10), 0, 0, 0]
+
+        MDLabel:
+            text: root.text_name
+            bold: True
+            font_style: "Subtitle1"
+            font_name: 'ArabicFont'
+            theme_text_color: "Custom"
+            text_color: (0.1, 0.1, 0.1, 1)
+            shorten: True
+            shorten_from: 'right'
+            halign: "left"
+
+        MDLabel:
+            text: root.text_balance
+            font_style: "Caption"
+            font_name: 'ArabicFont'
+            markup: True
+            theme_text_color: "Secondary"
+            halign: "left"
+
+    MDIconButton:
+        icon: "clock-time-eight-outline"
+        theme_text_color: "Custom"
+        text_color: (0, 0.5, 0.5, 1)
+        pos_hint: {"center_y": .5}
+        on_release: root.on_history()
+
+<MgmtEntityRecycleView>:
+    viewclass: 'MgmtEntityRecycleItem'
+    RecycleBoxLayout:
+        default_size: None, dp(80)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(2)
+        padding: dp(0)
+
+<CartRecycleItem>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: dp(85)
+    padding: [dp(15), 0, 0, 0]
+    md_bg_color: 1, 1, 1, 1
+    radius: [0]
+    ripple_behavior: True
+    on_release: root.on_tap()
+
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {"center_y": .5}
+        adaptive_height: True
+        spacing: dp(4)
+
+        MDLabel:
+            text: root.text_name
+            font_style: "Subtitle1"
+            bold: True
+            theme_text_color: "Primary"
+            adaptive_height: True
+            font_name: 'ArabicFont'
+
+        MDLabel:
+            text: root.text_details
+            font_size: "16sp"
+            theme_text_color: "Custom"
+            text_color: root.details_color
+            bold: True
+            adaptive_height: True
+            font_name: 'ArabicFont'
+
+    MDIconButton:
+        icon: "delete"
+        theme_text_color: "Custom"
+        text_color: (0.9, 0, 0, 1)
+        pos_hint: {"center_y": .5}
+        icon_size: "24sp"
+        on_release: root.on_delete()
+
+<CartRecycleView>:
+    viewclass: 'CartRecycleItem'
+    RecycleBoxLayout:
+        default_size: None, dp(85)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(1)
+
+# ==========================================
+# PARTIE LIVRAISON (OFFLINE)
+# ==========================================
+<DeliveryRecycleItem>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(140)
+    padding: dp(8)
+    spacing: dp(5)
+    
+    MDCard:
+        orientation: "vertical"
+        padding: dp(10)
+        spacing: dp(5)
+        radius: [12]
+        elevation: 2
+        md_bg_color: root.bg_color
+        on_release: root.on_tap_map()
+        
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(40)
+            spacing: dp(10)
+            
+            MDIcon:
+                icon: root.icon
+                theme_text_color: "Custom"
+                text_color: root.icon_color
+                font_size: "32sp"
+                size_hint_x: None
+                width: dp(40)
+                pos_hint: {"center_y": .5}
+                
+            MDBoxLayout:
+                orientation: "vertical"
+                
+                MDLabel:
+                    text: root.customer_name
+                    bold: True
+                    font_style: "Subtitle1"
+                    font_size: "18sp"
+                    theme_text_color: "Primary"
+                    font_name: 'ArabicFont'
+                    shorten: True
+                    halign: "left"
+                
+                MDLabel:
+                    text: root.address
+                    font_style: "Caption"
+                    theme_text_color: "Secondary"
+                    font_name: 'ArabicFont'
+                    shorten: True
+                    halign: "left"
+
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(45)
+            spacing: dp(10)
+            
+            MDLabel:
+                text: root.balance_text
+                font_style: "Subtitle2"
+                theme_text_color: "Error"
+                bold: True
+                halign: "left"
+                size_hint_x: 0.4
+                font_name: 'ArabicFont'
+
+            MDFillRoundFlatButton:
+                text: root.action_text
+                md_bg_color: root.action_color
+                on_release: root.on_action_tap()
+                size_hint_x: 0.6
+                font_name: 'ArabicFont'
+                disabled: root.is_delivered
+
+<DeliveryScreen>:
+    name: "delivery"
+    MDBoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Livraison (Mode Conducteur)"
+            left_action_items: [["arrow-left", lambda x: app.go_back()]]
+            right_action_items: [["refresh", lambda x: app.manual_sync_delivery()]]
+            elevation: 2
+
+        MDBoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(60)
+            padding: dp(10)
+            spacing: dp(5)
+            
+            MDTextField:
+                id: search_field
+                hint_text: "Rechercher un client..."
+                mode: "rectangle"
+                size_hint_x: 0.85
+                on_text: app.filter_delivery_list(self.text)
+                font_name: 'ArabicFont'
+                font_name_hint_text: 'ArabicFont'
+            
+            MDIconButton:
+                icon: "map-marker-radius"
+                on_release: app.open_all_map_link()
+                pos_hint: {"center_y": .5}
+
+        RecycleView:
+            id: rv_delivery
+            viewclass: 'DeliveryRecycleItem'
+            RecycleBoxLayout:
+                default_size: None, dp(145)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+                spacing: dp(8)
+                padding: dp(10)
+'''
 # ==========================================
 class KalmanLatLon:
 
