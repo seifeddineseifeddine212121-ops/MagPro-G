@@ -539,21 +539,21 @@ class StockApp(MDApp):
     batch_size = 50
     is_loading_more = False
 
-    def toggle_screen_keep_alive(self, button_instance):
-        """ 
-        Active/Désactive le maintien de l'écran allumé 
-        (Utilise l'API Android Native FLAG_KEEP_SCREEN_ON)
-        """
-        from kivy.utils import platform
-        
-        # نستخدم متغير لتتبع الحالة بدلاً من Window.keep_screen_on
-        if not hasattr(self, 'is_screen_kept_on'):
-            self.is_screen_kept_on = False
+    def _extract_coordinates(self, text):
+        if not text:
+            return (None, None)
+        patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                lat, lon = match.groups()
+                if '@' in pattern and (not lat or not lon):
+                    continue
+                return (lat, lon)
+        return (None, None)
 
-        # عكس الحالة
-        self.is_screen_kept_on = not self.is_screen_kept_on
-        
-        # --- كود الأندرويد الأصلي ---
+    def set_screen_keep_alive(self, active):
+        self.store.put('screen_config', keep_on=active)
         if platform == 'android':
             from jnius import autoclass
             from android.runnable import run_on_ui_thread
@@ -564,33 +564,15 @@ class StockApp(MDApp):
                     PythonActivity = autoclass('org.kivy.android.PythonActivity')
                     activity = PythonActivity.mActivity
                     window = activity.getWindow()
-                    # القيمة الرقمية لـ FLAG_KEEP_SCREEN_ON هي 128
-                    FLAG_KEEP_SCREEN_ON = 128 
-                    
                     if keep_on:
-                        window.addFlags(FLAG_KEEP_SCREEN_ON)
+                        window.addFlags(128)
                     else:
-                        window.clearFlags(FLAG_KEEP_SCREEN_ON)
+                        window.clearFlags(128)
                 except Exception as e:
-                    print(f"Erreur Screen Keep Alive: {e}")
-
-            # استدعاء الدالة
-            update_android_flag(self.is_screen_kept_on)
-        # -----------------------------
-
-        # تحديث الأيقونة والإشعار
-        if self.is_screen_kept_on:
-            # حالة التفعيل
-            button_instance.icon = "eye"
-            button_instance.theme_text_color = "Custom"
-            button_instance.text_color = (0, 1, 0, 1) # Vert vif
-            self.notify("Écran toujours allumé : ACTIVÉ ✅", "success")
-        else:
-            # حالة الإيقاف
-            button_instance.icon = "eye-off"
-            button_instance.theme_text_color = "Custom"
-            button_instance.text_color = (1, 1, 1, 1) # Blanc
-            self.notify("Écran toujours allumé : DÉSACTIVÉ ❌", "info")
+                    print(f'Erreur Screen Flag: {e}')
+            update_android_flag(active)
+        status = 'ACTIVÉ ✅' if active else 'DÉSACTIVÉ ❌'
+        self.notify(f'Écran toujours allumé : {status}', 'info')
 
     def on_pause(self):
         return True
@@ -1460,7 +1442,6 @@ class StockApp(MDApp):
         if not os.path.exists(self.image_cache_dir):
             try:
                 os.makedirs(self.image_cache_dir)
-                print(f'Created image cache dir: {self.image_cache_dir}')
             except Exception as e:
                 print(f'Error creating cache dir: {e}')
         if platform == 'android':
@@ -1468,8 +1449,11 @@ class StockApp(MDApp):
             try:
                 self.tone_gen = ToneGenerator(3, 100)
             except Exception as e:
-                print(f'DEBUG ERROR sound: {e}')
                 self.tone_gen = None
+        keep_screen_on = True
+        if self.store.exists('screen_config'):
+            keep_screen_on = self.store.get('screen_config').get('keep_on', True)
+        Clock.schedule_once(lambda dt: self.set_screen_keep_alive(keep_screen_on), 1)
         if self.check_license_validity():
             print('--- DEBUG: License Valid. Starting... ---')
             Clock.schedule_once(self._deferred_start, 0.5)
@@ -2581,26 +2565,14 @@ class StockApp(MDApp):
     def _build_dashboard_screen(self):
         screen = MDScreen(name='dashboard')
         layout = MDBoxLayout(orientation='vertical')
-        
-        self.dash_toolbar = MDTopAppBar(
-            title='Accueil',
-            left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]],
-            right_action_items=[
-                ['eye-off', lambda x: self.toggle_screen_keep_alive(x)],
-                ['map', lambda x: self.open_delivery_map()],
-                ['logout', lambda x: self.logout()]
-            ]
-        )
+        self.dash_toolbar = MDTopAppBar(title='Accueil', left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]], right_action_items=[['map', lambda x: self.open_delivery_map()], ['logout', lambda x: self.logout()]])
         layout.add_widget(self.dash_toolbar)
-
         scroll = MDScrollView()
         self.main_dash_content = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(20), padding=dp(15))
         self.buttons_container = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15))
         self.main_dash_content.add_widget(self.buttons_container)
-        
         self.stats_card_container = MDCard(orientation='vertical', size_hint_y=None, height=dp(280), padding=dp(10), radius=[10], elevation=2, md_bg_color=(0.97, 0.97, 0.97, 1))
         self.main_dash_content.add_widget(self.stats_card_container)
-        
         scroll.add_widget(self.main_dash_content)
         layout.add_widget(scroll)
         screen.add_widget(layout)
@@ -3123,30 +3095,42 @@ class StockApp(MDApp):
                     icon.text_color = icon_color
                 item.add_widget(icon)
                 content_list.add_widget(item)
-            add_section('CONNEXION SERVEUR')
-            ip_desc = f'Local: {self.local_server_ip}'
-            if self.external_server_ip:
-                ip_desc += f' | Ext: {self.external_server_ip}'
-            add_option('Configuration IP', ip_desc, 'lan-connect', self.show_ip_config_dialog)
-            add_section('IMPRIMANTE (Bluetooth)')
-            printer_conf = {'name': 'Non configurée', 'mac': '', 'auto': False}
-            if self.store.exists('printer_config'):
-                printer_conf = self.store.get('printer_config')
-            p_name = printer_conf.get('name', 'Non configurée')
-            if not p_name:
-                p_name = 'Non configurée'
-            add_option('Choisir Imprimante', f'Actuelle: {p_name}', 'printer-wireless', lambda x: [self.dialog.dismiss(), self.open_bluetooth_selector(x)])
-            add_option("Oublier l'imprimante", "Déconnecter l'appareil actuel", 'printer-off', lambda x: self.clear_printer_selection(x), icon_color=(0.8, 0, 0, 1))
-            auto_layout = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), padding=(dp(20), 0))
-            lbl_auto = MDLabel(text='Impression Auto après validation', theme_text_color='Primary', size_hint_x=0.8)
-            chk_auto = MDCheckbox(active=printer_conf.get('auto', False), size_hint=(None, None), size=(dp(40), dp(40)), pos_hint={'center_y': 0.5})
-            chk_auto.bind(active=self.toggle_auto_print_setting)
-            auto_layout.add_widget(lbl_auto)
-            auto_layout.add_widget(chk_auto)
-            content_list.add_widget(auto_layout)
+            if not self.is_seller_mode:
+                add_section('CONNEXION SERVEUR')
+                ip_desc = f'Local: {self.local_server_ip}'
+                if self.external_server_ip:
+                    ip_desc += f' | Ext: {self.external_server_ip}'
+                add_option('Configuration IP', ip_desc, 'lan-connect', self.show_ip_config_dialog)
+                add_section('IMPRIMANTE (Bluetooth)')
+                printer_conf = {'name': 'Non configurée', 'mac': '', 'auto': False}
+                if self.store.exists('printer_config'):
+                    printer_conf = self.store.get('printer_config')
+                p_name = printer_conf.get('name', 'Non configurée') or 'Non configurée'
+                add_option('Choisir Imprimante', f'Actuelle: {p_name}', 'printer-wireless', lambda x: [self.dialog.dismiss(), self.open_bluetooth_selector(x)])
+                add_option("Oublier l'imprimante", "Déconnecter l'appareil actuel", 'printer-off', lambda x: self.clear_printer_selection(x), icon_color=(0.8, 0, 0, 1))
+                auto_layout = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), padding=(dp(20), 0))
+                lbl_auto = MDLabel(text='Impression Auto après validation', theme_text_color='Primary', size_hint_x=0.8)
+                chk_auto = MDCheckbox(active=printer_conf.get('auto', False), size_hint=(None, None), size=(dp(40), dp(40)), pos_hint={'center_y': 0.5})
+                chk_auto.bind(active=self.toggle_auto_print_setting)
+                auto_layout.add_widget(lbl_auto)
+                auto_layout.add_widget(chk_auto)
+                content_list.add_widget(auto_layout)
+                add_section('AFFICHAGE')
+                current_screen_state = True
+                if self.store.exists('screen_config'):
+                    current_screen_state = self.store.get('screen_config').get('keep_on', True)
+                screen_layout = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), padding=(dp(20), 0))
+                lbl_screen = MDLabel(text="Garder l'écran allumé\n(Requis pour le GPS)", theme_text_color='Primary', size_hint_x=0.8, font_style='Body1')
+                chk_screen = MDCheckbox(active=current_screen_state, size_hint=(None, None), size=(dp(48), dp(48)), pos_hint={'center_y': 0.5})
+                chk_screen.bind(active=lambda inst, val: self.set_screen_keep_alive(val))
+                screen_layout.add_widget(lbl_screen)
+                screen_layout.add_widget(chk_screen)
+                content_list.add_widget(screen_layout)
             add_section('ADMINISTRATION')
-            mode_desc = 'Activé (Restreint)' if self.is_seller_mode else 'Désactivé (Admin)'
-            add_option('Mode Vendeur', f'État: {mode_desc}', 'shield-account', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
+            if not self.is_seller_mode:
+                add_option('Activer Mode Vendeur', 'Verrouiller les paramètres', 'shield-account', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
+            else:
+                add_option('Quitter Mode Vendeur', 'Accès Admin requis', 'lock-open', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
             scroll_view.add_widget(content_list)
             self.dialog = MDDialog(title='Paramètres', type='custom', content_cls=scroll_view, buttons=[MDFlatButton(text='FERMER', theme_text_color='Custom', text_color=self.theme_cls.primary_color, on_release=lambda x: self.dialog.dismiss())], size_hint=(0.95, None))
             self.dialog.open()
@@ -3193,10 +3177,20 @@ class StockApp(MDApp):
         if self.dialog:
             self.dialog.dismiss()
         has_pass = self.store.exists('seller_config')
-        title = 'Mot de passe Admin' if has_pass else 'Créer Mot de Passe'
-        content = MDBoxLayout(orientation='vertical', spacing=10, size_hint_y=None, height=dp(80))
-        self.seller_pass_field = MDTextField(hint_text='Code PIN/Password', password=True, halign='center')
+        if has_pass:
+            title = 'Accès Admin'
+            height = dp(80)
+        else:
+            title = 'Créer Mot de Passe'
+            height = dp(150)
+        content = MDBoxLayout(orientation='vertical', spacing=10, size_hint_y=None, height=height)
+        hint_1 = 'Mot de passe Admin' if has_pass else 'Nouveau mot de passe'
+        self.seller_pass_field = MDTextField(hint_text=hint_1, password=True, halign='center')
         content.add_widget(self.seller_pass_field)
+        self.seller_pass_confirm_field = None
+        if not has_pass:
+            self.seller_pass_confirm_field = MDTextField(hint_text='Confirmer le mot de passe', password=True, halign='center')
+            content.add_widget(self.seller_pass_confirm_field)
         self.auth_dialog = MDDialog(title=title, type='custom', content_cls=content, buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: self.auth_dialog.dismiss()), MDRaisedButton(text='OK', on_release=lambda x: self.check_create_seller_pass(has_pass))])
         self.auth_dialog.open()
 
@@ -5818,61 +5812,35 @@ class StockApp(MDApp):
     def start_gps_service(self):
         if platform != 'android':
             return
-        
         if not hasattr(self, 'kalman_filter'):
             self.kalman_filter = KalmanLatLon(Q_metres_per_second=3)
-
         from android.permissions import request_permissions, Permission
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
                 self.notify('Permission GPS refusée', 'error')
                 return
-
             try:
                 from jnius import autoclass
-                
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 Context = autoclass('android.content.Context')
                 LocationManager = autoclass('android.location.LocationManager')
                 PowerManager = autoclass('android.os.PowerManager')
-                
                 activity = PythonActivity.mActivity
-                
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
-                
                 if not hasattr(self, 'location_listener'):
                     self.location_listener = NativeLocationListener(self.on_native_location)
-                
-                self.location_manager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 
-                    3000, 
-                    5.0, 
-                    self.location_listener
-                )
-                
-                self.location_manager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 
-                    3000, 
-                    5.0, 
-                    self.location_listener
-                )
-                
+                self.location_manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 5.0, self.location_listener)
+                self.location_manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 5.0, self.location_listener)
                 power_manager = activity.getSystemService(Context.POWER_SERVICE)
                 if not hasattr(self, 'wake_lock') or self.wake_lock is None:
                     self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
                     self.wake_lock.acquire()
-                    
                 print('[GPS] Service GPS natif démarré avec succès')
-
             except Exception as e:
                 print(f'[GPS Error] Echec démarrage GPS natif: {e}')
                 self.notify('Erreur initialisation GPS', 'error')
-
-        request_permissions(
-            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
-            _start_native_gps
-        )
+        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_native_gps)
 
     def on_fused_location(self, location):
         try:
