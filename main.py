@@ -539,20 +539,22 @@ class StockApp(MDApp):
     batch_size = 50
     is_loading_more = False
 
-    def start_keep_alive_beat(self):
-        def _beat_loop():
-            while True:
-                try:
-
-                    if hasattr(self, 'tone_gen') and self.tone_gen:
-                        self.tone_gen.startTone(0, 1) 
-                except Exception as e:
-                    print(f"Keep Alive Error: {e}")
-                
-                time.sleep(20)
-
-        threading.Thread(target=_beat_loop, daemon=True).start()
-        print("[Power] Keep-Alive Heartbeat Started")
+    def toggle_screen_keep_alive(self, button_instance):
+        """ Active/Désactive le maintien de l'écran allumé """
+        from kivy.core.window import Window
+        
+        Window.keep_screen_on = not Window.keep_screen_on
+        
+        if Window.keep_screen_on:
+            button_instance.icon = "eye"
+            button_instance.theme_text_color = "Custom"
+            button_instance.text_color = (0, 1, 0, 1) # 
+            self.notify("Écran toujours allumé : ACTIVÉ ✅", "success")
+        else:
+            button_instance.icon = "eye-off"
+            button_instance.theme_text_color = "Custom"
+            button_instance.text_color = (1, 1, 1, 1) 
+            self.notify("Écran toujours allumé : DÉSACTIVÉ ❌", "info")
 
     def on_pause(self):
         return True
@@ -2543,14 +2545,26 @@ class StockApp(MDApp):
     def _build_dashboard_screen(self):
         screen = MDScreen(name='dashboard')
         layout = MDBoxLayout(orientation='vertical')
-        self.dash_toolbar = MDTopAppBar(title='Accueil', left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]], right_action_items=[['map', lambda x: self.open_delivery_map()], ['logout', lambda x: self.logout()]])
+        
+        self.dash_toolbar = MDTopAppBar(
+            title='Accueil',
+            left_action_items=[['clipboard-text-clock', lambda x: self.show_pending_dialog()]],
+            right_action_items=[
+                ['eye-off', lambda x: self.toggle_screen_keep_alive(x)],
+                ['map', lambda x: self.open_delivery_map()],
+                ['logout', lambda x: self.logout()]
+            ]
+        )
         layout.add_widget(self.dash_toolbar)
+
         scroll = MDScrollView()
         self.main_dash_content = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(20), padding=dp(15))
         self.buttons_container = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15))
         self.main_dash_content.add_widget(self.buttons_container)
+        
         self.stats_card_container = MDCard(orientation='vertical', size_hint_y=None, height=dp(280), padding=dp(10), radius=[10], elevation=2, md_bg_color=(0.97, 0.97, 0.97, 1))
         self.main_dash_content.add_widget(self.stats_card_container)
+        
         scroll.add_widget(self.main_dash_content)
         layout.add_widget(scroll)
         screen.add_widget(layout)
@@ -5789,30 +5803,35 @@ class StockApp(MDApp):
                 
                 activity = PythonActivity.mActivity
                 
-                power_manager = activity.getSystemService(Context.POWER_SERVICE)
-                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                    self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPS_AlwaysOn')
-                    self.wake_lock.acquire()
-                
                 self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
+                
                 if not hasattr(self, 'location_listener'):
                     self.location_listener = NativeLocationListener(self.on_native_location)
                 
                 self.location_manager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 3000, 5.0, self.location_listener
+                    LocationManager.GPS_PROVIDER, 
+                    3000, 
+                    5.0, 
+                    self.location_listener
                 )
+                
                 self.location_manager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 3000, 5.0, self.location_listener
+                    LocationManager.NETWORK_PROVIDER, 
+                    3000, 
+                    5.0, 
+                    self.location_listener
                 )
-
-                self.start_keep_alive_beat()
+                
+                power_manager = activity.getSystemService(Context.POWER_SERVICE)
+                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
+                    self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
+                    self.wake_lock.acquire()
                     
-                self.notify('تتبع GPS نشط (يعمل في الخلفية)', 'success')
-                print('[GPS] Service started with Partial WakeLock + Heartbeat')
+                print('[GPS] Service GPS natif démarré avec succès')
 
             except Exception as e:
-                print(f'[GPS Error] : {e}')
-                self.notify('Erreur GPS', 'error')
+                print(f'[GPS Error] Echec démarrage GPS natif: {e}')
+                self.notify('Erreur initialisation GPS', 'error')
 
         request_permissions(
             [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
