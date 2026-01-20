@@ -5687,9 +5687,8 @@ class StockApp(MDApp):
         self.zoom_dialog.open()
 
     def on_resume(self):
-        if platform == 'android' and hasattr(self, 'wake_lock') and self.wake_lock:
-            if not self.wake_lock.isHeld():
-                self.wake_lock.acquire()
+        if platform == 'android':
+            self.start_gps_service()
         return True
 
     def on_stop(self):
@@ -5699,18 +5698,10 @@ class StockApp(MDApp):
                     self.location_manager.removeUpdates(self.location_listener)
             except:
                 pass
-        if platform == 'android' and hasattr(self, 'wake_lock') and self.wake_lock:
-            try:
-                if self.wake_lock.isHeld():
-                    self.wake_lock.release()
-                    print('DEBUG: WakeLock Released')
-            except:
-                pass
 
     def start_gps_service(self):
         if platform != 'android':
             return
-        self.current_best_location = None
         try:
             if hasattr(self, 'location_manager') and self.location_manager:
                 if hasattr(self, 'location_listener') and self.location_listener:
@@ -5720,7 +5711,7 @@ class StockApp(MDApp):
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('Permission GPS refusée', 'error')
+                self.notify('Permission de localisation refusée', 'error')
                 return
             try:
                 activity = PythonActivity.mActivity
@@ -5728,17 +5719,25 @@ class StockApp(MDApp):
                 try:
                     power_manager = activity.getSystemService(Context.POWER_SERVICE)
                     if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSBackground')
-                        self.wake_lock.setReferenceCounted(False)
-                    if not self.wake_lock.isHeld():
+                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
                         self.wake_lock.acquire()
-                        print('DEBUG: WakeLock Acquired (Background Mode ON)')
                 except Exception as w_err:
                     print(f'WakeLock error: {w_err}')
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                min_time = 3000
-                min_distance = 5.0
+                min_time = 2000
+                min_distance = 0.0
                 providers_started = False
+                try:
+                    last_known_location = None
+                    if self.location_manager.isProviderEnabled('gps'):
+                        last_known_location = self.location_manager.getLastKnownLocation('gps')
+                    if not last_known_location and self.location_manager.isProviderEnabled('network'):
+                        last_known_location = self.location_manager.getLastKnownLocation('network')
+                    if last_known_location:
+                        self.on_native_location(last_known_location)
+                        print('DEBUG: Last known location sent immediately.')
+                except Exception as e_last:
+                    print(f'Error getting last known location: {e_last}')
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
@@ -5746,12 +5745,12 @@ class StockApp(MDApp):
                     self.location_manager.requestLocationUpdates('network', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
                 if providers_started:
-                    self.notify('Suivi GPS Actif (Arrière-plan)', 'success')
+                    pass
                 else:
                     self.notify('Veuillez activer le GPS', 'error')
             except Exception as e:
                 print(f'GPS Start Error: {e}')
-                self.notify('Erreur démarrage GPS', 'error')
+                self.notify('Erreur lors du démarrage du GPS', 'error')
         request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], _start_native_gps)
 
     def on_native_location(self, location):
