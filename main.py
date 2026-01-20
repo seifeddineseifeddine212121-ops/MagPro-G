@@ -170,533 +170,7 @@ reshaper = arabic_reshaper.ArabicReshaper(configuration={'delete_harakat': True,
 # ==========================================
 DEFAULT_PORT = '5000'
 # ==========================================
-KV_BUILDER = '''
-<LeftButtonsContainer>:
-    adaptive_width: True
-    spacing: "4dp"
-    padding: "4dp"
-    pos_hint: {"center_y": .5}
-
-<RightButtonsContainer>:
-    adaptive_width: True
-    spacing: "8dp"
-    pos_hint: {"center_y": .5}
-
-<CustomHistoryItem>:
-    orientation: "horizontal"
-    size_hint_y: None
-    height: dp(80)
-    padding: dp(10)
-    spacing: dp(5)
-    radius: [10]
-    elevation: 1
-    ripple_behavior: True
-    md_bg_color: root.bg_color
-    on_release: root.on_tap_action()
-    
-    MDIcon:
-        icon: root.icon
-        theme_text_color: "Custom"
-        text_color: root.icon_color
-        pos_hint: {"center_y": .5}
-        font_size: "32sp"
-        size_hint_x: None
-        width: dp(40)
-        
-    MDBoxLayout:
-        orientation: "vertical"
-        pos_hint: {"center_y": .5}
-        spacing: dp(4)
-        size_hint_x: 0.5
-        
-        MDLabel:
-            text: root.text
-            bold: True
-            font_style: "Subtitle1"
-            font_size: "16sp"
-            theme_text_color: "Primary"
-            shorten: True
-            shorten_from: 'right'
-            font_name: 'ArabicFont'
-            markup: True
-            
-        MDLabel:
-            text: root.secondary_text
-            font_style: "Caption"
-            theme_text_color: "Secondary"
-            font_name: 'ArabicFont'
-            
-    MDLabel:
-        text: root.right_text
-        halign: "right"
-        pos_hint: {"center_y": .5}
-        font_style: "Subtitle2"
-        bold: True
-        theme_text_color: "Custom"
-        text_color: root.icon_color
-        size_hint_x: 0.3
-        font_name: 'ArabicFont'
-
-    MDIconButton:
-        icon: "pencil"
-        theme_text_color: "Custom"
-        text_color: (0, 0.5, 0.8, 1)
-        pos_hint: {"center_y": .5}
-        on_release: root.on_edit_action()
-
-<ProductRecycleItem>:
-    orientation: 'vertical'
-    size_hint_y: None
-    height: dp(90)
-    padding: 0
-    spacing: 0
-    
-    MDCard:
-        orientation: 'horizontal'
-        padding: dp(10)
-        spacing: dp(10)
-        radius: [8]
-        elevation: 1
-        ripple_behavior: True
-        on_release: root.on_tap()
-        md_bg_color: (1, 1, 1, 1)
-        
-        MDCard:
-            size_hint: None, None
-            size: dp(50), dp(50)
-            radius: [5]
-            elevation: 0
-            md_bg_color: (0, 0, 0, 0)
-            pos_hint: {'center_y': .5}
-            ripple_behavior: True
-            on_release: root.on_image_tap()
-            
-            MDFloatLayout:
-                MDIcon:
-                    icon: root.icon_name
-                    theme_text_color: "Custom"
-                    text_color: root.icon_color
-                    pos_hint: {'center_x': .5, 'center_y': .5}
-                    font_size: '32sp'
-                    opacity: 1 if not root.image_source else 0
-
-                FitImage:
-                    source: root.image_source
-                    radius: [5]
-                    pos_hint: {'center_x': .5, 'center_y': .5}
-                    opacity: 1 if root.image_source else 0
-
-        MDBoxLayout:
-            orientation: 'vertical'
-            pos_hint: {'center_y': .5}
-            spacing: dp(5)
-            
-            MDLabel:
-                text: root.text_name
-                font_style: "Subtitle1"
-                bold: True
-                text_size: self.width, None
-                max_lines: 2
-                halign: 'left'
-                font_size: '17sp'
-                theme_text_color: "Custom"
-                text_color: (0.1, 0.1, 0.1, 1)
-                font_name: 'ArabicFont'
-            
-            MDBoxLayout:
-                orientation: 'horizontal'
-                spacing: dp(10)
-                
-                MDLabel:
-                    text: root.text_price
-                    font_style: "H6"
-                    theme_text_color: "Custom"
-                    text_color: root.price_color
-                    bold: True
-                    size_hint_x: 0.6
-                    font_size: '20sp'
-                    font_name: 'ArabicFont'
-                
-                MDLabel:
-                    text: root.text_stock
-                    theme_text_color: "Custom"
-                    text_color: (0.1, 0.1, 0.1, 1)
-                    halign: 'right'
-                    size_hint_x: 0.4
-                    bold: True
-                    font_size: '16sp'
-                    font_name: 'ArabicFont'
-
-<ProductRecycleView>:
-    viewclass: 'ProductRecycleItem'
-    RecycleBoxLayout:
-        default_size: None, dp(95)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        spacing: dp(4)
-        padding: dp(5)
-
-<HistoryRecycleItem>:
-    orientation: "horizontal"
-    size_hint_y: None
-    height: dp(80)
-    padding: dp(10)
-    spacing: dp(5)
-    radius: [10]
-    elevation: 1
-    ripple_behavior: True
-    md_bg_color: root.bg_color
-    on_release: root.on_tap()
-
-    MDIcon:
-        icon: root.icon_name
-        theme_text_color: "Custom"
-        text_color: root.icon_color
-        pos_hint: {"center_y": .5}
-        font_size: "32sp"
-        size_hint_x: None
-        width: dp(40)
-
-    MDBoxLayout:
-        orientation: "vertical"
-        pos_hint: {"center_y": .5}
-        spacing: dp(4)
-        size_hint_x: 1
-
-        MDLabel:
-            text: root.text_primary
-            bold: True
-            font_style: "Subtitle1"
-            font_size: "16sp"
-            theme_text_color: "Primary"
-            text_size: self.width, None
-            halign: 'left'
-            font_name: 'ArabicFont'
-            markup: True
-
-        MDLabel:
-            text: root.text_secondary
-            font_style: "Caption"
-            theme_text_color: "Secondary"
-            font_name: 'ArabicFont'
-
-    MDLabel:
-        text: root.text_amount
-        halign: "right"
-        pos_hint: {"center_y": .5}
-        font_style: "Subtitle2"
-        bold: True
-        theme_text_color: "Custom"
-        text_color: root.icon_color
-        size_hint_x: None
-        width: dp(110)
-        font_name: 'ArabicFont'
-
-<HistoryRecycleView>:
-    viewclass: 'HistoryRecycleItem'
-    RecycleBoxLayout:
-        default_size: None, dp(85)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        spacing: dp(5)
-        padding: dp(5)
-
-<EntityRecycleItem>:
-    orientation: "horizontal"
-    size_hint_y: None
-    height: dp(80)
-    padding: dp(10)
-    spacing: dp(15)
-    ripple_behavior: True
-    md_bg_color: (1, 1, 1, 1)
-    radius: [0]
-    on_release: root.on_tap()
-
-    MDIcon:
-        icon: root.icon_name
-        theme_text_color: "Custom"
-        text_color: root.icon_color
-        pos_hint: {"center_y": .5}
-        font_size: "32sp"
-        size_hint_x: None
-        width: dp(40)
-
-    MDBoxLayout:
-        orientation: "vertical"
-        pos_hint: {"center_y": .5}
-        size_hint_x: 1
-        spacing: dp(4)
-
-        MDLabel:
-            text: root.text_name
-            bold: True
-            font_style: "Subtitle1"
-            font_name: 'ArabicFont'
-            theme_text_color: "Custom"
-            text_color: (0.1, 0.1, 0.1, 1)
-            shorten: True
-            shorten_from: 'right'
-            valign: 'center'
-
-        MDLabel:
-            text: root.text_balance
-            font_style: "Caption"
-            font_name: 'ArabicFont'
-            markup: True
-            theme_text_color: "Secondary"
-            valign: 'top'
-
-<EntityRecycleView>:
-    viewclass: 'EntityRecycleItem'
-    RecycleBoxLayout:
-        default_size: None, dp(80)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        spacing: dp(2)
-        padding: dp(0)
-
-<MgmtEntityRecycleItem>:
-    orientation: "horizontal"
-    size_hint_y: None
-    height: dp(80)
-    padding: dp(10)
-    spacing: dp(5)
-    ripple_behavior: True
-    md_bg_color: (1, 1, 1, 1)
-    on_release: root.on_pay()
-
-    MDIcon:
-        icon: "account-circle"
-        theme_text_color: "Custom"
-        text_color: (0.5, 0.5, 0.5, 1)
-        pos_hint: {"center_y": .5}
-        font_size: "32sp"
-        size_hint_x: None
-        width: dp(40)
-
-    MDBoxLayout:
-        orientation: "vertical"
-        pos_hint: {"center_y": .5}
-        size_hint_x: 1
-        spacing: dp(2)
-        padding: [dp(10), 0, 0, 0]
-
-        MDLabel:
-            text: root.text_name
-            bold: True
-            font_style: "Subtitle1"
-            font_name: 'ArabicFont'
-            theme_text_color: "Custom"
-            text_color: (0.1, 0.1, 0.1, 1)
-            shorten: True
-            shorten_from: 'right'
-            halign: "left"
-
-        MDLabel:
-            text: root.text_balance
-            font_style: "Caption"
-            font_name: 'ArabicFont'
-            markup: True
-            theme_text_color: "Secondary"
-            halign: "left"
-
-    MDIconButton:
-        icon: "clock-time-eight-outline"
-        theme_text_color: "Custom"
-        text_color: (0, 0.5, 0.5, 1)
-        pos_hint: {"center_y": .5}
-        on_release: root.on_history()
-
-<MgmtEntityRecycleView>:
-    viewclass: 'MgmtEntityRecycleItem'
-    RecycleBoxLayout:
-        default_size: None, dp(80)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        spacing: dp(2)
-        padding: dp(0)
-
-<CartRecycleItem>:
-    orientation: "horizontal"
-    size_hint_y: None
-    height: dp(85)
-    padding: [dp(15), 0, 0, 0]
-    md_bg_color: 1, 1, 1, 1
-    radius: [0]
-    ripple_behavior: True
-    on_release: root.on_tap()
-
-    MDBoxLayout:
-        orientation: "vertical"
-        pos_hint: {"center_y": .5}
-        adaptive_height: True
-        spacing: dp(4)
-
-        MDLabel:
-            text: root.text_name
-            font_style: "Subtitle1"
-            bold: True
-            theme_text_color: "Primary"
-            adaptive_height: True
-            font_name: 'ArabicFont'
-
-        MDLabel:
-            text: root.text_details
-            font_size: "16sp"
-            theme_text_color: "Custom"
-            text_color: root.details_color
-            bold: True
-            adaptive_height: True
-            font_name: 'ArabicFont'
-
-    MDIconButton:
-        icon: "delete"
-        theme_text_color: "Custom"
-        text_color: (0.9, 0, 0, 1)
-        pos_hint: {"center_y": .5}
-        icon_size: "24sp"
-        on_release: root.on_delete()
-
-<CartRecycleView>:
-    viewclass: 'CartRecycleItem'
-    RecycleBoxLayout:
-        default_size: None, dp(85)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        spacing: dp(1)
-
-# ==========================================
-# PARTIE LIVRAISON (OFFLINE)
-# ==========================================
-<DeliveryRecycleItem>:
-    orientation: "vertical"
-    size_hint_y: None
-    height: dp(140)
-    padding: dp(8)
-    spacing: dp(5)
-    
-    MDCard:
-        orientation: "vertical"
-        padding: dp(10)
-        spacing: dp(5)
-        radius: [12]
-        elevation: 2
-        md_bg_color: root.bg_color
-        on_release: root.on_tap_map()
-        
-        MDBoxLayout:
-            orientation: "horizontal"
-            size_hint_y: None
-            height: dp(40)
-            spacing: dp(10)
-            
-            MDIcon:
-                icon: root.icon
-                theme_text_color: "Custom"
-                text_color: root.icon_color
-                font_size: "32sp"
-                size_hint_x: None
-                width: dp(40)
-                pos_hint: {"center_y": .5}
-                
-            MDBoxLayout:
-                orientation: "vertical"
-                
-                MDLabel:
-                    text: root.customer_name
-                    bold: True
-                    font_style: "Subtitle1"
-                    font_size: "18sp"
-                    theme_text_color: "Primary"
-                    font_name: 'ArabicFont'
-                    shorten: True
-                    halign: "left"
-                
-                MDLabel:
-                    text: root.address
-                    font_style: "Caption"
-                    theme_text_color: "Secondary"
-                    font_name: 'ArabicFont'
-                    shorten: True
-                    halign: "left"
-
-        MDBoxLayout:
-            orientation: "horizontal"
-            size_hint_y: None
-            height: dp(45)
-            spacing: dp(10)
-            
-            MDLabel:
-                text: root.balance_text
-                font_style: "Subtitle2"
-                theme_text_color: "Error"
-                bold: True
-                halign: "left"
-                size_hint_x: 0.4
-                font_name: 'ArabicFont'
-
-            MDFillRoundFlatButton:
-                text: root.action_text
-                md_bg_color: root.action_color
-                on_release: root.on_action_tap()
-                size_hint_x: 0.6
-                font_name: 'ArabicFont'
-                disabled: root.is_delivered
-
-<DeliveryScreen>:
-    name: "delivery"
-    MDBoxLayout:
-        orientation: 'vertical'
-        
-        MDTopAppBar:
-            title: "Livraison (Mode Conducteur)"
-            left_action_items: [["arrow-left", lambda x: app.go_back()]]
-            right_action_items: [["refresh", lambda x: app.manual_sync_delivery()]]
-            elevation: 2
-
-        MDBoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: dp(60)
-            padding: dp(10)
-            spacing: dp(5)
-            
-            MDTextField:
-                id: search_field
-                hint_text: "Rechercher un client..."
-                mode: "rectangle"
-                size_hint_x: 0.85
-                on_text: app.filter_delivery_list(self.text)
-                font_name: 'ArabicFont'
-                font_name_hint_text: 'ArabicFont'
-            
-            MDIconButton:
-                icon: "map-marker-radius"
-                on_release: app.open_all_map_link()
-                pos_hint: {"center_y": .5}
-
-        RecycleView:
-            id: rv_delivery
-            viewclass: 'DeliveryRecycleItem'
-            RecycleBoxLayout:
-                default_size: None, dp(145)
-                default_size_hint: 1, None
-                size_hint_y: None
-                height: self.minimum_height
-                orientation: 'vertical'
-                spacing: dp(8)
-                padding: dp(10)
-'''
+KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
 # ==========================================
 class KalmanLatLon:
 
@@ -1011,71 +485,6 @@ class ProductRecycleView(RecycleView):
                 self.loading_lock = True
                 app.load_more_products()
 
-# ==========================================
-# CLASSES POUR LE MODE LIVRAISON (OFFLINE)
-# ضع هذا الكود قبل class StockApp(MDApp):
-# ==========================================
-
-class DeliveryRecycleItem(RecycleDataViewBehavior, MDBoxLayout):
-    index = None
-    customer_name = StringProperty("")
-    address = StringProperty("")
-    balance_text = StringProperty("")
-    icon = StringProperty("map-marker")
-    icon_color = ListProperty([0.5, 0.5, 0.5, 1])
-    bg_color = ListProperty([1, 1, 1, 1])
-    action_text = StringProperty("Confirmer")
-    action_color = ListProperty([0, 0.7, 0, 1])
-    is_delivered = BooleanProperty(False)
-    gps_data = StringProperty("")
-    entity_id = StringProperty("")
-
-    def refresh_view_attrs(self, rv, index, data):
-        self.index = index
-        self.customer_name = data.get('name', '')
-        self.address = data.get('address', 'Position Inconnue')
-        self.balance_text = data.get('balance_text', '')
-        self.is_delivered = data.get('is_delivered', False)
-        self.gps_data = data.get('gps', '')
-        self.entity_id = str(data.get('id', ''))
-        
-        # تغيير الألوان والنصوص (Mise à jour visuelle)
-        if self.is_delivered:
-            self.icon = "check-circle"
-            self.icon_color = [0, 0.7, 0, 1] # Vert (Succès)
-            self.bg_color = [0.9, 1, 0.9, 1] # Fond Vert clair
-            self.action_text = "Livré"
-            self.action_color = [0.5, 0.5, 0.5, 1] # Gris (Désactivé)
-        else:
-            self.icon = "truck-delivery"
-            self.icon_color = [0.2, 0.2, 0.2, 1]
-            self.bg_color = [1, 1, 1, 1] # Fond Blanc
-            self.action_text = "Confirmer"
-            self.action_color = [0, 0.6, 0.8, 1] # Bleu (Action)
-            
-        return super().refresh_view_attrs(rv, index, data)
-
-    def on_tap_map(self):
-        # فتح الخريطة (Ouvrir Google Maps)
-        app = MDApp.get_running_app()
-        if self.gps_data:
-            app.open_client_location(self.gps_data)
-        else:
-            app.notify("Pas de GPS", "error")
-
-    def on_action_tap(self):
-        # تأكيد التوصيل (Confirmer la livraison)
-        if not self.is_delivered:
-            app = MDApp.get_running_app()
-            app.confirm_delivery_action(self.entity_id, self.customer_name)
-
-class DeliveryScreen(MDScreen):
-    pass
-
-# ==========================================
-# END OF DELIVERY CLASSES
-# ==========================================
-
 class StockApp(MDApp):
     cart = []
     all_products_raw = []
@@ -1130,143 +539,6 @@ class StockApp(MDApp):
     batch_size = 50
     is_loading_more = False
 
-    def open_delivery_mode(self):
-        self.sm.transition.direction = 'left'
-        self.sm.current = 'delivery'
-        self.refresh_delivery_list() # عرض الكاش فوراً
-        
-        # محاولة التحديث من السيرفر في الخلفية إذا كان متصلاً
-        if self.is_server_reachable:
-            threading.Thread(target=self.fetch_delivery_data, daemon=True).start()
-
-    def fetch_delivery_data(self):
-        """جلب البيانات من السيرفر وتخزينها محلياً للاستخدام Offline"""
-        try:
-            # طلب البيانات من السيرفر
-            url = f"http://{self.active_server_ip}:{DEFAULT_PORT}/api/map_data?username={self.current_user_name}"
-            
-            def on_success(req, result):
-                if result and 'customers' in result:
-                    # حفظ البيانات في ملف محلي (الكاش)
-                    self.delivery_store.put('customers_data', data=result['customers'], timestamp=time.time())
-                    self.notify("Carte client mise à jour (Cache)", "success")
-                    self.refresh_delivery_list() # تحديث الواجهة بالبيانات الجديدة
-            
-            UrlRequest(url, on_success=on_success)
-        except Exception as e:
-            print(f"Fetch Error: {e}")
-
-    @mainthread
-    def refresh_delivery_list(self, filter_text=""):
-        """قراءة البيانات من الملف المحلي + العمليات المعلقة Offline"""
-        # 1. تحميل الزبائن من الذاكرة المحلية (Cache)
-        if not self.delivery_store.exists('customers_data'):
-            customers = []
-        else:
-            customers = self.delivery_store.get('customers_data')['data']
-            
-        # 2. معرفة من تم توصيله في وضع Offline ولم يرسل للسيرفر بعد
-        pending_deliveries = []
-        for key in self.offline_store.keys():
-            item = self.offline_store.get(key)
-            # التحقق إذا كانت العملية هي 'delivery_confirm' وغير متزامنة
-            if not item.get('synced') and item.get('order_data', {}).get('type') == 'delivery_confirm':
-                pending_deliveries.append(str(item['order_data']['entity_id']))
-
-        rv_data = []
-        for c in customers:
-            c_name = self.fix_text(c.get('name', ''))
-            # الفلترة (البحث)
-            if filter_text and filter_text.lower() not in c_name.lower():
-                continue
-                
-            # التحقق من حالة التوصيل (هل هو موصل في السيرفر أو محلياً؟)
-            is_delivered_server = c.get('is_delivered', False)
-            is_delivered_local = str(c.get('id')) in pending_deliveries
-            
-            # تجهيز رابط GPS للعمل Offline (Geo URI يفتح التطبيق مباشرة)
-            gps_loc = ""
-            if c.get('lat') and c.get('lon'):
-                gps_loc = f"geo:{c['lat']},{c['lon']}?q={c['lat']},{c['lon']}({c_name})"
-            
-            rv_data.append({
-                'name': c_name,
-                'address': self.fix_text(c.get('address', '')),
-                'balance_text': f"{c.get('balance', 0)} DA",
-                'is_delivered': is_delivered_server or is_delivered_local, # إذا تم التوصيل في أي منهما
-                'gps': gps_loc,
-                'id': str(c.get('id'))
-            })
-            
-        # الترتيب: غير الموصل أولاً
-        rv_data.sort(key=lambda x: x['is_delivered'])
-        
-        # تحديث الشاشة
-        screen = self.sm.get_screen('delivery')
-        if screen:
-            rv = screen.ids.rv_delivery
-            rv.data = rv_data
-            rv.refresh_from_data()
-
-    def filter_delivery_list(self, text):
-        self.refresh_delivery_list(filter_text=text)
-
-    def confirm_delivery_action(self, entity_id, customer_name):
-        """حفظ عملية التوصيل محلياً أولاً (Offline First) ثم محاولة المزامنة"""
-        # تجهيز البيانات
-        data = {
-            'type': 'delivery_confirm', # نوع عملية جديد خاص بالتوصيل
-            'entity_id': entity_id,
-            'driver': self.current_user_name,
-            'timestamp': str(datetime.now())
-        }
-        
-        # الحفظ في المخزن المحلي (Offline Store) بمفتاح فريد
-        key_name = f"DLV_{int(time.time())}_{entity_id}"
-        # نستخدم دالة الحفظ الموجودة في التطبيق ولكن نمرر المفتاح يدوياً إذا لزم الأمر
-        # هنا سنستخدم الـ offline_store مباشرة لضمان عدم التعارض
-        self.offline_store.put(key_name, order_data=data, synced=False, sync_timestamp=0)
-        
-        # تحديث الواجهة فوراً ليرى السائق العلامة الخضراء
-        self.notify(f"Livré: {customer_name} (Sauvegardé)", "success")
-        self.refresh_delivery_list()
-        
-        # محاولة المزامنة إذا كان هناك إنترنت
-        if self.is_server_reachable:
-            self.try_sync_offline_data()
-
-    def manual_sync_delivery(self):
-        """زر التحديث اليدوي"""
-        if self.is_server_reachable:
-            self.notify("Synchronisation...", "info")
-            threading.Thread(target=self.fetch_delivery_data, daemon=True).start() # جلب الجديد
-            self.try_sync_offline_data() # إرسال القديم
-        else:
-            self.notify("Pas de connexion (Mode Hors Ligne)", "warning")
-            self.refresh_delivery_list()
-
-    def open_all_map_link(self):
-        """فتح رابط الخريطة الشاملة (يتطلب إنترنت)"""
-        if self.is_server_reachable:
-             import webbrowser
-             url = f"http://{self.active_server_ip}:{DEFAULT_PORT}/delivery_map/{self.current_user_name}"
-             webbrowser.open(url)
-        else:
-             self.notify("Carte en direct nécessite Internet", "error")
-
-    def _extract_coordinates(self, text):
-        if not text:
-            return (None, None)
-        patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                lat, lon = match.groups()
-                if '@' in pattern and (not lat or not lon):
-                    continue
-                return (lat, lon)
-        return (None, None)
-
     def set_screen_keep_alive(self, active):
         self.store.put('screen_config', keep_on=active)
         if platform == 'android':
@@ -1286,8 +558,6 @@ class StockApp(MDApp):
                 except Exception as e:
                     print(f'Erreur Screen Flag: {e}')
             update_android_flag(active)
-        status = 'ACTIVÉ ✅' if active else 'DÉSACTIVÉ ❌'
-        self.notify(f'Écran toujours allumé : {status}', 'info')
 
     def on_pause(self):
         return True
@@ -2011,103 +1281,60 @@ class StockApp(MDApp):
         return (round(total_ht, 2), round(total_tva, 2))
 
     def build(self):
-        # تحميل واجهة المستخدم من متغير KV_BUILDER
         Builder.load_string(KV_BUILDER)
-        
         self.title = 'MagPro Gestion de Stock'
         self._search_event = None
         self._entity_search_event = None
-        
-        # إعدادات الثيم والألوان
-        self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.accent_palette = "Amber"
-        self.theme_cls.theme_style = "Light"
-        
-        # تعريف أنماط الخطوط (لضمان ظهور العربية والفرنسية بشكل جيد)
-        self.theme_cls.font_styles["H4"] = ["ArabicFont", 34, False, 0.25]
-        self.theme_cls.font_styles["H5"] = ["ArabicFont", 24, False, 0]
-        self.theme_cls.font_styles["H6"] = ["ArabicFont", 20, False, 0.15]
-        self.theme_cls.font_styles["Subtitle1"] = ["ArabicFont", 16, False, 0.15]
-        self.theme_cls.font_styles["Subtitle2"] = ["ArabicFont", 14, False, 0.1]
-        self.theme_cls.font_styles["Body1"] = ["ArabicFont", 16, False, 0.5]
-        self.theme_cls.font_styles["Body2"] = ["ArabicFont", 14, False, 0.25]
-        self.theme_cls.font_styles["Button"] = ["ArabicFont", 14, True, 1.25]
-        self.theme_cls.font_styles["Caption"] = ["ArabicFont", 12, False, 0.4]
-
-        # تحديد مسار بيانات التطبيق
+        self.theme_cls.primary_palette = 'Blue'
+        self.theme_cls.accent_palette = 'Amber'
+        self.theme_cls.theme_style = 'Light'
+        self.theme_cls.font_styles['H4'] = ['ArabicFont', 34, False, 0.25]
+        self.theme_cls.font_styles['H5'] = ['ArabicFont', 24, False, 0]
+        self.theme_cls.font_styles['H6'] = ['ArabicFont', 20, False, 0.15]
+        self.theme_cls.font_styles['Subtitle1'] = ['ArabicFont', 16, False, 0.15]
+        self.theme_cls.font_styles['Subtitle2'] = ['ArabicFont', 14, False, 0.1]
+        self.theme_cls.font_styles['Body1'] = ['ArabicFont', 16, False, 0.5]
+        self.theme_cls.font_styles['Body2'] = ['ArabicFont', 14, False, 0.25]
+        self.theme_cls.font_styles['Button'] = ['ArabicFont', 14, True, 1.25]
+        self.theme_cls.font_styles['Caption'] = ['ArabicFont', 12, False, 0.4]
         self.data_dir = self.user_data_dir
 
-        # دالة مساعدة لتحميل ملفات JsonStore بأمان
         def load_safe_store(filename):
             path = os.path.join(self.data_dir, filename)
             try:
                 return JsonStore(path)
             except Exception as e:
-                print(f"[CORRUPTION DETECTED] Resetting {filename} due to error: {e}")
+                print(f'[CORRUPTION DETECTED] Resetting {filename} due to error: {e}')
                 try:
                     if os.path.exists(path):
                         os.remove(path)
-                except: pass
+                except:
+                    pass
                 return JsonStore(path)
-
-        # تهيئة ملفات التخزين
-        self.offline_store = load_safe_store('stock_pending_orders.json') # العمليات المعلقة
-        self.cache_store = load_safe_store('stock_cache.json')           # كاش المنتجات والزبائن
-        self.stats_store = load_safe_store('local_stats.json')           # الإحصائيات
-        self.store = load_safe_store('app_settings.json')                # الإعدادات
-        self.gps_store = load_safe_store('gps_logs.json')                # سجلات GPS
-        
-        # --- [جديد] ملف كاش خاص بوضع التوصيل Offline ---
-        self.delivery_store = load_safe_store('delivery_cache.json')
-
-        # تنظيف سجلات GPS القديمة
+        self.offline_store = load_safe_store('stock_pending_orders.json')
+        self.cache_store = load_safe_store('stock_cache.json')
+        self.stats_store = load_safe_store('local_stats.json')
+        self.store = load_safe_store('app_settings.json')
+        self.gps_store = load_safe_store('gps_logs.json')
         self.cleanup_old_gps_logs()
-
-        # تحميل الإعدادات المحفوظة
         if self.store.exists('config'):
             conf = self.store.get('config')
             self.local_server_ip = conf.get('ip', '192.168.1.100')
             self.external_server_ip = conf.get('ext_ip', '')
             self.is_seller_mode = conf.get('seller_mode', False)
             self.active_server_ip = self.local_server_ip
-
-        # بناء الهيكل الرئيسي للواجهة
         self.root_box = MDBoxLayout(orientation='vertical')
-        
-        # مدير الشاشات (Screen Manager)
         self.sm = MDScreenManager()
-        self.sm.add_widget(self._build_login_screen())      # شاشة الدخول
-        self.sm.add_widget(self._build_dashboard_screen())  # لوحة التحكم
-        self.sm.add_widget(self._build_products_screen())   # شاشة المنتجات
-        self.sm.add_widget(self._build_cart_screen())       # شاشة السلة
-        
-        # --- [جديد] إضافة شاشة التوصيل ---
-        self.sm.add_widget(DeliveryScreen(name='delivery'))
-
+        self.sm.add_widget(self._build_login_screen())
+        self.sm.add_widget(self._build_dashboard_screen())
+        self.sm.add_widget(self._build_products_screen())
+        self.sm.add_widget(self._build_cart_screen())
         self.root_box.add_widget(self.sm)
-
-        # شريط الحالة السفلي (Status Bar)
-        self.status_bar_bg = MDCard(
-            size_hint_y=None, 
-            height=dp(40), 
-            radius=[0], 
-            md_bg_color=(0.2, 0.2, 0.2, 1), 
-            elevation=0
-        )
-        self.status_bar_label = MDLabel(
-            text="Initialisation...", 
-            halign="center", 
-            theme_text_color="Custom", 
-            text_color=(1, 1, 1, 1), 
-            font_style="Caption", 
-            bold=True
-        )
+        self.status_bar_bg = MDCard(size_hint_y=None, height=dp(40), radius=[0], md_bg_color=(0.2, 0.2, 0.2, 1), elevation=0)
+        self.status_bar_label = MDLabel(text='Initialisation...', halign='center', theme_text_color='Custom', text_color=(1, 1, 1, 1), font_style='Caption', bold=True)
         self.status_bar_bg.add_widget(self.status_bar_label)
         self.root_box.add_widget(self.status_bar_bg)
-
-        # بدء فحص الاتصال بالسيرفر (Heartbeat)
         self._heartbeat_event = Clock.schedule_interval(self.check_server_heartbeat, 5)
-
         return self.root_box
 
     def get_device_id(self):
@@ -3148,75 +2375,39 @@ class StockApp(MDApp):
             return
         if not self.is_server_reachable:
             return
-            
-        # جلب المفاتيح غير المتزامنة
         keys = list(self.offline_store.keys())
         unsynced = [k for k in keys if not self.offline_store.get(k).get('synced', False)]
-        
         if not unsynced:
             self._reset_notification_state(0)
             return
-            
-        # ترتيب حسب القدم
-        sorted_keys = sorted(unsynced, key=lambda x: int(x.split('_')[1]) if len(x.split('_')) > 1 and x.split('_')[1].isdigit() else 0)
+        sorted_keys = sorted(unsynced, key=lambda x: int(x.split('_')[0]) if x.split('_')[0].isdigit() else 0)
         key = sorted_keys[0]
-        
         try:
             item_data = self.offline_store.get(key)
             data = item_data['order_data']
-            
-            # --- تحديد الرابط ونوع البيانات (المنطق الجديد) ---
-            endpoint = '/api/submit_order' # الرابط الافتراضي (فواتير)
-            payload = data
-            
-            if data.get('is_simple_payment'):
-                endpoint = '/api/submit_payment' # رابط الدفعات
-            elif data.get('type') == 'delivery_confirm':
-                # رابط تأكيد التوصيل
-                endpoint = '/api/mark_delivered'
-                # تحويل البيانات للشكل الذي يقبله السيرفر
-                payload = {'id': data['entity_id'], 'driver': data.get('driver', self.current_user_name)}
+            endpoint = '/api/submit_payment' if data.get('is_simple_payment') else '/api/submit_order'
 
-            # دالة النجاح
+            def next_step(*args):
+                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 0.5)
+
             def success(r, res):
                 item_data['synced'] = True
                 item_data['sync_timestamp'] = time.time()
-                # تحديث المعرفات إذا عادت من السيرفر (للفواتير)
                 if res.get('server_id'):
                     item_data['order_data']['server_id'] = res.get('server_id')
-                
+                if res.get('invoice_number'):
+                    item_data['order_data']['invoice_number'] = res.get('invoice_number')
                 self.offline_store.put(key, **item_data)
-                
-                # إشعار حسب النوع
-                if data.get('type') == 'delivery_confirm':
-                    self.notify("Livraison Synchronisée ✅", "success")
-                else:
-                    self.notify("Données Synchronisées ✅", "success")
-                
-                # الانتقال للعنصر التالي
-                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 0.5)
+                self.notify(f"Sync OK: {data.get('doc_type', 'Op')}", 'success')
+                next_step()
 
-            # دالة الفشل
             def failure(req, err):
                 print(f'Sync Fail for {key}: {err}')
-                # المحاولة لاحقاً
-                Clock.schedule_once(lambda d: self.try_sync_offline_data(), 2)
-
-            # إرسال الطلب
-            UrlRequest(
-                f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', 
-                req_body=json.dumps(payload), 
-                req_headers={'Content-type': 'application/json'}, 
-                method='POST', 
-                on_success=success, 
-                on_failure=failure, 
-                on_error=failure, 
-                timeout=10
-            )
-            
+                next_step()
+            UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=success, on_failure=failure, on_error=failure, timeout=10)
         except Exception as e:
             print(f'Sync Logic Error: {e}')
-            Clock.schedule_once(lambda d: self.try_sync_offline_data(), 2)
+            Clock.schedule_once(lambda d: self.try_sync_offline_data(), 1)
 
     def notify(self, text, type='info'):
         if not self.status_bar_label:
