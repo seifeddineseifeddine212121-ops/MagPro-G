@@ -5753,56 +5753,61 @@ class StockApp(MDApp):
     def start_gps_service(self):
         if platform != 'android':
             return
+        
         if not hasattr(self, 'kalman_filter'):
             self.kalman_filter = KalmanLatLon(Q_metres_per_second=3)
+
         from android.permissions import request_permissions, Permission
 
-        def _start_fused_location(permissions, grants):
+        def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('إذن الموقع مرفوض', 'error')
+                self.notify('Permission GPS refusée', 'error')
                 return
+
             try:
-                from jnius import autoclass, cast, java_method, PythonJavaClass
-                LocationServices = autoclass('com.google.android.gms.location.LocationServices')
-                LocationRequest = autoclass('com.google.android.gms.location.LocationRequest')
-                Looper = autoclass('android.os.Looper')
+                from jnius import autoclass
+                
                 PythonActivity = autoclass('org.kivy.android.PythonActivity')
-                activity = PythonActivity.mActivity
-                self.fused_client = LocationServices.getFusedLocationProviderClient(activity)
-                self.location_request = LocationRequest.create()
-                self.location_request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                self.location_request.setInterval(3000)
-                self.location_request.setFastestInterval(1000)
-                self.location_request.setSmallestDisplacement(5)
-
-                class LocationCallbackWrapper(PythonJavaClass):
-                    __javainterfaces__ = ['com/google/android/gms/location/LocationCallback']
-                    __javacontext__ = 'app'
-
-                    def __init__(self, callback):
-                        super().__init__()
-                        self.callback = callback
-
-                    @java_method('(Lcom/google/android/gms/location/LocationResult;)V')
-                    def onLocationResult(self, locationResult):
-                        if locationResult is None:
-                            return
-                        locations = locationResult.getLocations()
-                        for i in range(locations.size()):
-                            loc = locations.get(i)
-                            self.callback(loc)
-                self.location_callback = LocationCallbackWrapper(self.on_fused_location)
-                self.fused_client.requestLocationUpdates(self.location_request, self.location_callback, Looper.getMainLooper())
                 Context = autoclass('android.content.Context')
+                LocationManager = autoclass('android.location.LocationManager')
                 PowerManager = autoclass('android.os.PowerManager')
+                
+                activity = PythonActivity.mActivity
+                
+                self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
+                
+                if not hasattr(self, 'location_listener'):
+                    self.location_listener = NativeLocationListener(self.on_native_location)
+                
+                self.location_manager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 
+                    3000, 
+                    5.0, 
+                    self.location_listener
+                )
+                
+                self.location_manager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER, 
+                    3000, 
+                    5.0, 
+                    self.location_listener
+                )
+                
                 power_manager = activity.getSystemService(Context.POWER_SERVICE)
                 if not hasattr(self, 'wake_lock') or self.wake_lock is None:
                     self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
                     self.wake_lock.acquire()
+                    
+                print('[GPS] Service GPS natif démarré avec succès')
+
             except Exception as e:
-                print(f'[Fused GPS Error] {e}')
-                self.notify('خدمات جوجل غير متوفرة، جاري استخدام GPS العادي', 'warning')
-        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_fused_location)
+                print(f'[GPS Error] Echec démarrage GPS natif: {e}')
+                self.notify('Erreur initialisation GPS', 'error')
+
+        request_permissions(
+            [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
+            _start_native_gps
+        )
 
     def on_fused_location(self, location):
         try:
