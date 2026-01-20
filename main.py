@@ -539,6 +539,21 @@ class StockApp(MDApp):
     batch_size = 50
     is_loading_more = False
 
+    def start_keep_alive_beat(self):
+        def _beat_loop():
+            while True:
+                try:
+
+                    if hasattr(self, 'tone_gen') and self.tone_gen:
+                        self.tone_gen.startTone(0, 1) 
+                except Exception as e:
+                    print(f"Keep Alive Error: {e}")
+                
+                time.sleep(20)
+
+        threading.Thread(target=_beat_loop, daemon=True).start()
+        print("[Power] Keep-Alive Heartbeat Started")
+
     def on_pause(self):
         return True
 
@@ -5774,35 +5789,30 @@ class StockApp(MDApp):
                 
                 activity = PythonActivity.mActivity
                 
-                self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
+                power_manager = activity.getSystemService(Context.POWER_SERVICE)
+                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
+                    self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPS_AlwaysOn')
+                    self.wake_lock.acquire()
                 
+                self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
                 if not hasattr(self, 'location_listener'):
                     self.location_listener = NativeLocationListener(self.on_native_location)
                 
                 self.location_manager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 
-                    3000, 
-                    5.0, 
-                    self.location_listener
+                    LocationManager.GPS_PROVIDER, 3000, 5.0, self.location_listener
                 )
-                
                 self.location_manager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 
-                    3000, 
-                    5.0, 
-                    self.location_listener
+                    LocationManager.NETWORK_PROVIDER, 3000, 5.0, self.location_listener
                 )
-                
-                power_manager = activity.getSystemService(Context.POWER_SERVICE)
-                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                    self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
-                    self.wake_lock.acquire()
+
+                self.start_keep_alive_beat()
                     
-                print('[GPS] Service GPS natif démarré avec succès')
+                self.notify('تتبع GPS نشط (يعمل في الخلفية)', 'success')
+                print('[GPS] Service started with Partial WakeLock + Heartbeat')
 
             except Exception as e:
-                print(f'[GPS Error] Echec démarrage GPS natif: {e}')
-                self.notify('Erreur initialisation GPS', 'error')
+                print(f'[GPS Error] : {e}')
+                self.notify('Erreur GPS', 'error')
 
         request_permissions(
             [Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], 
