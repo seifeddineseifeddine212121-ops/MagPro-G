@@ -172,6 +172,32 @@ DEFAULT_PORT = '5000'
 # ==========================================
 KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
 # ==========================================
+class KalmanLatLon:
+
+    def __init__(self, Q_metres_per_second):
+        self.Q_metres_per_second = Q_metres_per_second
+        self.TimeStamp_milliseconds = 0
+        self.lat = 0
+        self.lon = 0
+        self.variance = -1
+
+    def process(self, lat_measurement, lon_measurement, accuracy, time_stamp_ms):
+        if self.variance < 0:
+            self.TimeStamp_milliseconds = time_stamp_ms
+            self.lat = lat_measurement
+            self.lon = lon_measurement
+            self.variance = accuracy * accuracy
+        else:
+            time_inc_ms = time_stamp_ms - self.TimeStamp_milliseconds
+            if time_inc_ms > 0:
+                self.variance += time_inc_ms * self.Q_metres_per_second * self.Q_metres_per_second / 1000
+                self.TimeStamp_milliseconds = time_stamp_ms
+            K = self.variance / (self.variance + accuracy * accuracy)
+            self.lat += K * (lat_measurement - self.lat)
+            self.lon += K * (lon_measurement - self.lon)
+            self.variance = (1 - K) * self.variance
+        return (self.lat, self.lon)
+
 class CartRecycleItem(RecycleDataViewBehavior, MDCard):
     text_name = StringProperty('')
     text_details = StringProperty('')
@@ -5727,53 +5753,76 @@ class StockApp(MDApp):
     def start_gps_service(self):
         if platform != 'android':
             return
-        try:
-            if hasattr(self, 'location_manager') and self.location_manager:
-                if hasattr(self, 'location_listener') and self.location_listener:
-                    self.location_manager.removeUpdates(self.location_listener)
-        except Exception as e:
-            print(f'Error clearing old GPS: {e}')
+        if not hasattr(self, 'kalman_filter'):
+            self.kalman_filter = KalmanLatLon(Q_metres_per_second=3)
+        from android.permissions import request_permissions, Permission
 
-        def _start_native_gps(permissions, grants):
+        def _start_fused_location(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('Permission de localisation refusée', 'error')
+                self.notify('إذن الموقع مرفوض', 'error')
                 return
             try:
+                from jnius import autoclass, cast, java_method, PythonJavaClass
+                LocationServices = autoclass('com.google.android.gms.location.LocationServices')
+                LocationRequest = autoclass('com.google.android.gms.location.LocationRequest')
+                Looper = autoclass('android.os.Looper')
+                PythonActivity = autoclass('org.kivy.android.PythonActivity')
                 activity = PythonActivity.mActivity
-                self.location_manager = activity.getSystemService(Context.LOCATION_SERVICE)
-                try:
-                    power_manager = activity.getSystemService(Context.POWER_SERVICE)
-                    if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
-                        self.wake_lock.acquire()
-                except Exception as w_err:
-                    print(f'WakeLock error: {w_err}')
-                self.location_listener = NativeLocationListener(self.on_native_location)
-                min_time = 5000
-                min_distance = 15.0
-                providers_started = False
-                try:
-                    last_known_location = None
-                    if self.location_manager.isProviderEnabled('gps'):
-                        last_known_location = self.location_manager.getLastKnownLocation('gps')
-                    if not last_known_location and self.location_manager.isProviderEnabled('network'):
-                        last_known_location = self.location_manager.getLastKnownLocation('network')
-                    if last_known_location:
-                        self.on_native_location(last_known_location)
-                except Exception as e_last:
-                    print(f'Error getting last known location: {e_last}')
-                if self.location_manager.isProviderEnabled('gps'):
-                    self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
-                    providers_started = True
-                if self.location_manager.isProviderEnabled('network'):
-                    self.location_manager.requestLocationUpdates('network', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
-                    providers_started = True
-                if not providers_started:
-                    self.notify('Veuillez activer le GPS', 'error')
+                self.fused_client = LocationServices.getFusedLocationProviderClient(activity)
+                self.location_request = LocationRequest.create()
+                self.location_request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                self.location_request.setInterval(3000)
+                self.location_request.setFastestInterval(1000)
+                self.location_request.setSmallestDisplacement(5)
+
+                class LocationCallbackWrapper(PythonJavaClass):
+                    __javainterfaces__ = ['com/google/android/gms/location/LocationCallback']
+                    __javacontext__ = 'app'
+
+                    def __init__(self, callback):
+                        super().__init__()
+                        self.callback = callback
+
+                    @java_method('(Lcom/google/android/gms/location/LocationResult;)V')
+                    def onLocationResult(self, locationResult):
+                        if locationResult is None:
+                            return
+                        locations = locationResult.getLocations()
+                        for i in range(locations.size()):
+                            loc = locations.get(i)
+                            self.callback(loc)
+                self.location_callback = LocationCallbackWrapper(self.on_fused_location)
+                self.fused_client.requestLocationUpdates(self.location_request, self.location_callback, Looper.getMainLooper())
+                Context = autoclass('android.content.Context')
+                PowerManager = autoclass('android.os.PowerManager')
+                power_manager = activity.getSystemService(Context.POWER_SERVICE)
+                if not hasattr(self, 'wake_lock') or self.wake_lock is None:
+                    self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
+                    self.wake_lock.acquire()
             except Exception as e:
-                print(f'GPS Start Error: {e}')
-                self.notify('Erreur lors du démarrage du GPS', 'error')
-        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], _start_native_gps)
+                print(f'[Fused GPS Error] {e}')
+                self.notify('خدمات جوجل غير متوفرة، جاري استخدام GPS العادي', 'warning')
+        request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION], _start_fused_location)
+
+    def on_fused_location(self, location):
+        try:
+            if location.isFromMockProvider():
+                return
+            raw_lat = location.getLatitude()
+            raw_lon = location.getLongitude()
+            accuracy = location.getAccuracy()
+            speed = location.getSpeed() * 3.6
+            timestamp_ms = location.getTime()
+            if accuracy > 40:
+                return
+            filtered_lat, filtered_lon = self.kalman_filter.process(raw_lat, raw_lon, accuracy, timestamp_ms)
+            timestamp_sec = timestamp_ms / 1000.0
+            date_str = str(datetime.now().date())
+            key = f'{int(timestamp_sec)}_{random.randint(100, 999)}'
+            self.gps_store.put(key, lat=filtered_lat, lon=filtered_lon, speed=speed, accuracy=accuracy, timestamp=timestamp_sec, date=date_str, synced=False, is_mock=False)
+            self.sync_gps_data()
+        except Exception as e:
+            print(f'Error processing fused location: {e}')
 
     def on_native_location(self, location):
         try:
@@ -5808,24 +5857,31 @@ class StockApp(MDApp):
         unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k).get('synced', False)]
         if not unsynced_keys:
             return
-        self.is_gps_syncing = True
         unsynced_keys.sort(key=lambda k: self.gps_store.get(k)['timestamp'])
-        key = unsynced_keys[0]
-        item = self.gps_store.get(key)
+        BATCH_SIZE = 50
+        batch_keys = unsynced_keys[:BATCH_SIZE]
+        batch_payload = []
+        for key in batch_keys:
+            item = self.gps_store.get(key)
+            batch_payload.append({'username': self.current_user_name, 'lat': item['lat'], 'lon': item['lon'], 'speed': item.get('speed', 0), 'timestamp': item['timestamp'], 'key': key})
+        self.is_gps_syncing = True
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-        payload = {'username': self.current_user_name, 'lat': item['lat'], 'lon': item['lon'], 'speed': item.get('speed', 0), 'timestamp': item['timestamp']}
 
         def on_success(req, res):
-            if self.gps_store.exists(key):
-                item['synced'] = True
-                self.gps_store.put(key, **item)
+            for item in batch_payload:
+                k = item['key']
+                if self.gps_store.exists(k):
+                    stored = self.gps_store.get(k)
+                    stored['synced'] = True
+                    self.gps_store.put(k, **stored)
             self.is_gps_syncing = False
-            Clock.schedule_once(lambda dt: self.sync_gps_data(), 0.1)
+            if len(unsynced_keys) > BATCH_SIZE:
+                Clock.schedule_once(lambda dt: self.sync_gps_data(), 0.1)
 
         def on_fail(req, err):
-            print(f'[GPS] Sync failed for {key}: {err}')
+            print(f'[GPS Batch] Sync failed: {err}')
             self.is_gps_syncing = False
-        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+        UrlRequest(url, req_body=json.dumps(batch_payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=8)
 
     def is_better_location(self, location, current_best_location):
         if current_best_location is None:
