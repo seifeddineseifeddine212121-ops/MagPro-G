@@ -5724,8 +5724,13 @@ class StockApp(MDApp):
                 except Exception as w_err:
                     print(f'WakeLock error: {w_err}')
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                min_time = 2000
-                min_distance = 0.0
+                
+                # --- تعديل 1: تخفيف الضغط على السيرفر ---
+                # التحديث كل 5 ثواني كحد أدنى (بدل 2)
+                # وفقط إذا تحرك السائق 15 متر (بدل 0)
+                min_time = 5000 
+                min_distance = 15.0 
+                
                 providers_started = False
                 try:
                     last_known_location = None
@@ -5735,18 +5740,16 @@ class StockApp(MDApp):
                         last_known_location = self.location_manager.getLastKnownLocation('network')
                     if last_known_location:
                         self.on_native_location(last_known_location)
-                        print('DEBUG: Last known location sent immediately.')
                 except Exception as e_last:
                     print(f'Error getting last known location: {e_last}')
+                    
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
                 if self.location_manager.isProviderEnabled('network'):
                     self.location_manager.requestLocationUpdates('network', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
-                if providers_started:
-                    pass
-                else:
+                if not providers_started:
                     self.notify('Veuillez activer le GPS', 'error')
             except Exception as e:
                 print(f'GPS Start Error: {e}')
@@ -5776,14 +5779,25 @@ class StockApp(MDApp):
     def sync_gps_data(self):
         if not self.is_server_reachable or self.sync_paused:
             return
+        
+        # --- تعديل 2: منع التداخل ---
+        # إذا كانت هناك عملية مزامنة جارية، لا تبدأ واحدة جديدة
+        if getattr(self, 'is_gps_syncing', False):
+            return
+
         if not self.current_user_name:
             if self.store.exists('credentials'):
                 self.current_user_name = self.store.get('credentials').get('username')
             else:
                 return
+
         unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k).get('synced', False)]
         if not unsynced_keys:
             return
+
+        # قفل العملية
+        self.is_gps_syncing = True
+
         unsynced_keys.sort(key=lambda k: self.gps_store.get(k)['timestamp'])
         key = unsynced_keys[0]
         item = self.gps_store.get(key)
@@ -5794,12 +5808,19 @@ class StockApp(MDApp):
             if self.gps_store.exists(key):
                 item['synced'] = True
                 self.gps_store.put(key, **item)
-                self.sync_gps_data()
+            
+            # فك القفل واستدعاء الدالة مجدداً لإرسال النقطة التالية
+            self.is_gps_syncing = False
+            # تأخير بسيط جداً لمنع الحمل الزائد
+            Clock.schedule_once(lambda dt: self.sync_gps_data(), 0.1)
 
         def on_fail(req, err):
             print(f'[GPS] Sync failed for {key}: {err}')
-        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+            # فك القفل للسماح بالمحاولة لاحقاً
+            self.is_gps_syncing = False
+            # لا نستدعي المزامنة فوراً عند الفشل لتجنب الإغراق
 
+        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
     def is_better_location(self, location, current_best_location):
         if current_best_location is None:
             return True
