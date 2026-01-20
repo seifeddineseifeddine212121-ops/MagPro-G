@@ -2539,13 +2539,27 @@ class StockApp(MDApp):
         if not self.is_server_reachable:
             self.notify('Serveur inaccessible (Hors Ligne)', 'error')
             return
-        import webbrowser
-        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/delivery_map/{self.current_user_name}'
-        self.notify('Ouverture de la carte...', 'info')
-        try:
-            webbrowser.open(url)
-        except Exception as e:
-            self.notify(f'Erreur ouverture navigateur: {e}', 'error')
+        self.notify('Sécurisation du lien...', 'info')
+        api_url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/get_secure_map_link'
+        body = json.dumps({'username': self.current_user_name})
+        headers = {'Content-type': 'application/json'}
+
+        def on_token_received(req, result):
+            token = result.get('token')
+            if token:
+                final_url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/delivery_map/{token}'
+                self.notify('Ouverture de la carte...', 'success')
+                import webbrowser
+                try:
+                    webbrowser.open(final_url)
+                except Exception as e:
+                    self.notify(f'Erreur navigateur: {e}', 'error')
+            else:
+                self.notify('Erreur: Token non reçu', 'error')
+
+        def on_fail(req, err):
+            self.notify(f'Erreur Map: {str(err)}', 'error')
+        UrlRequest(api_url, req_body=body, req_headers=headers, method='POST', on_success=on_token_received, on_failure=on_fail, on_error=on_fail)
 
     def _build_dashboard_screen(self):
         screen = MDScreen(name='dashboard')
