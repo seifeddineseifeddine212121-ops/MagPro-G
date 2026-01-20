@@ -540,20 +540,56 @@ class StockApp(MDApp):
     is_loading_more = False
 
     def toggle_screen_keep_alive(self, button_instance):
-        """ Active/Désactive le maintien de l'écran allumé """
-        from kivy.core.window import Window
+        """ 
+        Active/Désactive le maintien de l'écran allumé 
+        (Utilise l'API Android Native FLAG_KEEP_SCREEN_ON)
+        """
+        from kivy.utils import platform
         
-        Window.keep_screen_on = not Window.keep_screen_on
+        # نستخدم متغير لتتبع الحالة بدلاً من Window.keep_screen_on
+        if not hasattr(self, 'is_screen_kept_on'):
+            self.is_screen_kept_on = False
+
+        # عكس الحالة
+        self.is_screen_kept_on = not self.is_screen_kept_on
         
-        if Window.keep_screen_on:
+        # --- كود الأندرويد الأصلي ---
+        if platform == 'android':
+            from jnius import autoclass
+            from android.runnable import run_on_ui_thread
+
+            @run_on_ui_thread
+            def update_android_flag(keep_on):
+                try:
+                    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+                    activity = PythonActivity.mActivity
+                    window = activity.getWindow()
+                    # القيمة الرقمية لـ FLAG_KEEP_SCREEN_ON هي 128
+                    FLAG_KEEP_SCREEN_ON = 128 
+                    
+                    if keep_on:
+                        window.addFlags(FLAG_KEEP_SCREEN_ON)
+                    else:
+                        window.clearFlags(FLAG_KEEP_SCREEN_ON)
+                except Exception as e:
+                    print(f"Erreur Screen Keep Alive: {e}")
+
+            # استدعاء الدالة
+            update_android_flag(self.is_screen_kept_on)
+        # -----------------------------
+
+        # تحديث الأيقونة والإشعار
+        if self.is_screen_kept_on:
+            # حالة التفعيل
             button_instance.icon = "eye"
             button_instance.theme_text_color = "Custom"
-            button_instance.text_color = (0, 1, 0, 1) # 
+            button_instance.text_color = (0, 1, 0, 1) # Vert vif
             self.notify("Écran toujours allumé : ACTIVÉ ✅", "success")
         else:
+            # حالة الإيقاف
             button_instance.icon = "eye-off"
             button_instance.theme_text_color = "Custom"
-            button_instance.text_color = (1, 1, 1, 1) 
+            button_instance.text_color = (1, 1, 1, 1) # Blanc
             self.notify("Écran toujours allumé : DÉSACTIVÉ ❌", "info")
 
     def on_pause(self):
