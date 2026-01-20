@@ -344,6 +344,7 @@ class MgmtEntityRecycleItem(RecycleDataViewBehavior, MDCard):
     entity_data = ObjectProperty(None, allownone=True)
     _long_press_event = None
     _is_long_press = False
+    _start_pos = (0, 0)
 
     def refresh_view_attrs(self, rv, index, data):
         self.index = index
@@ -357,13 +358,17 @@ class MgmtEntityRecycleItem(RecycleDataViewBehavior, MDCard):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self._is_long_press = False
-            self._long_press_event = Clock.schedule_once(lambda dt: self._trigger_long_press(), 0.7)
+            self._start_pos = touch.pos
+            self._long_press_event = Clock.schedule_once(lambda dt: self._trigger_long_press(), 0.5)
         return super().on_touch_down(touch)
 
     def on_touch_move(self, touch):
         if self._long_press_event:
-            self._long_press_event.cancel()
-            self._long_press_event = None
+            diff_x = abs(touch.x - self._start_pos[0])
+            diff_y = abs(touch.y - self._start_pos[1])
+            if diff_x > dp(20) or diff_y > dp(20):
+                self._long_press_event.cancel()
+                self._long_press_event = None
         return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
@@ -2127,7 +2132,27 @@ class StockApp(MDApp):
                     cat_ar = 'نصف جملة'
                 else:
                     cat_ar = 'تجزئة'
-            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': f_gps.get_value().strip(), 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
+            gps_txt = f_gps.get_value().strip()
+            lat_val, lon_val = ('', '')
+            if gps_txt:
+                try:
+                    patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
+                    for pattern in patterns:
+                        match = re.search(pattern, gps_txt)
+                        if match:
+                            found_lat, found_lon = match.groups()
+                            if '!3d' in pattern:
+                                lat_val, lon_val = (found_lat, found_lon)
+                                break
+                            if '@' in pattern:
+                                if not lat_val:
+                                    lat_val, lon_val = (found_lat, found_lon)
+                            else:
+                                lat_val, lon_val = (found_lat, found_lon)
+                                break
+                except Exception as e:
+                    print(f'GPS Parse Error: {e}')
+            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': gps_txt, 'lat': lat_val, 'lon': lon_val, 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
             if self.is_server_reachable:
                 UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
             else:
@@ -5724,13 +5749,8 @@ class StockApp(MDApp):
                 except Exception as w_err:
                     print(f'WakeLock error: {w_err}')
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                
-                # --- تعديل 1: تخفيف الضغط على السيرفر ---
-                # التحديث كل 5 ثواني كحد أدنى (بدل 2)
-                # وفقط إذا تحرك السائق 15 متر (بدل 0)
-                min_time = 5000 
-                min_distance = 15.0 
-                
+                min_time = 5000
+                min_distance = 15.0
                 providers_started = False
                 try:
                     last_known_location = None
@@ -5742,7 +5762,6 @@ class StockApp(MDApp):
                         self.on_native_location(last_known_location)
                 except Exception as e_last:
                     print(f'Error getting last known location: {e_last}')
-                    
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
@@ -5779,25 +5798,17 @@ class StockApp(MDApp):
     def sync_gps_data(self):
         if not self.is_server_reachable or self.sync_paused:
             return
-        
-        # --- تعديل 2: منع التداخل ---
-        # إذا كانت هناك عملية مزامنة جارية، لا تبدأ واحدة جديدة
         if getattr(self, 'is_gps_syncing', False):
             return
-
         if not self.current_user_name:
             if self.store.exists('credentials'):
                 self.current_user_name = self.store.get('credentials').get('username')
             else:
                 return
-
         unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k).get('synced', False)]
         if not unsynced_keys:
             return
-
-        # قفل العملية
         self.is_gps_syncing = True
-
         unsynced_keys.sort(key=lambda k: self.gps_store.get(k)['timestamp'])
         key = unsynced_keys[0]
         item = self.gps_store.get(key)
@@ -5808,19 +5819,14 @@ class StockApp(MDApp):
             if self.gps_store.exists(key):
                 item['synced'] = True
                 self.gps_store.put(key, **item)
-            
-            # فك القفل واستدعاء الدالة مجدداً لإرسال النقطة التالية
             self.is_gps_syncing = False
-            # تأخير بسيط جداً لمنع الحمل الزائد
             Clock.schedule_once(lambda dt: self.sync_gps_data(), 0.1)
 
         def on_fail(req, err):
             print(f'[GPS] Sync failed for {key}: {err}')
-            # فك القفل للسماح بالمحاولة لاحقاً
             self.is_gps_syncing = False
-            # لا نستدعي المزامنة فوراً عند الفشل لتجنب الإغراق
-
         UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+
     def is_better_location(self, location, current_best_location):
         if current_best_location is None:
             return True
