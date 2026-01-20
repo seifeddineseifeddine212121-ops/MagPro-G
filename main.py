@@ -2268,9 +2268,10 @@ class StockApp(MDApp):
 
     def _on_heartbeat_success(self):
         self.is_server_reachable = True
-        unsynced = [k for k in self.offline_store.keys() if not self.offline_store.get(k).get('synced', False)]
-        if unsynced:
+        unsynced_orders = [k for k in self.offline_store.keys() if not self.offline_store.get(k).get('synced', False)]
+        if unsynced_orders:
             self.try_sync_offline_data()
+        self.sync_gps_data()
         if self.is_offline_mode:
             self.is_offline_mode = False
             self.notify(f"Connexion OK ({('Local' if self.active_server_ip == self.local_server_ip else 'Ext')})", 'success')
@@ -5686,8 +5687,9 @@ class StockApp(MDApp):
         self.zoom_dialog.open()
 
     def on_resume(self):
-        if platform == 'android':
-            self.start_gps_service()
+        if platform == 'android' and hasattr(self, 'wake_lock') and self.wake_lock:
+            if not self.wake_lock.isHeld():
+                self.wake_lock.acquire()
         return True
 
     def on_stop(self):
@@ -5697,10 +5699,18 @@ class StockApp(MDApp):
                     self.location_manager.removeUpdates(self.location_listener)
             except:
                 pass
+        if platform == 'android' and hasattr(self, 'wake_lock') and self.wake_lock:
+            try:
+                if self.wake_lock.isHeld():
+                    self.wake_lock.release()
+                    print('DEBUG: WakeLock Released')
+            except:
+                pass
 
     def start_gps_service(self):
         if platform != 'android':
             return
+        self.current_best_location = None
         try:
             if hasattr(self, 'location_manager') and self.location_manager:
                 if hasattr(self, 'location_listener') and self.location_listener:
@@ -5710,7 +5720,7 @@ class StockApp(MDApp):
 
         def _start_native_gps(permissions, grants):
             if not grants or not grants[0]:
-                self.notify('Permission de localisation refusée', 'error')
+                self.notify('Permission GPS refusée', 'error')
                 return
             try:
                 activity = PythonActivity.mActivity
@@ -5718,25 +5728,17 @@ class StockApp(MDApp):
                 try:
                     power_manager = activity.getSystemService(Context.POWER_SERVICE)
                     if not hasattr(self, 'wake_lock') or self.wake_lock is None:
-                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSLock')
+                        self.wake_lock = power_manager.newWakeLock(1, 'MagPro:GPSBackground')
+                        self.wake_lock.setReferenceCounted(False)
+                    if not self.wake_lock.isHeld():
                         self.wake_lock.acquire()
+                        print('DEBUG: WakeLock Acquired (Background Mode ON)')
                 except Exception as w_err:
                     print(f'WakeLock error: {w_err}')
                 self.location_listener = NativeLocationListener(self.on_native_location)
-                min_time = 2000
-                min_distance = 0.0
+                min_time = 3000
+                min_distance = 5.0
                 providers_started = False
-                try:
-                    last_known_location = None
-                    if self.location_manager.isProviderEnabled('gps'):
-                        last_known_location = self.location_manager.getLastKnownLocation('gps')
-                    if not last_known_location and self.location_manager.isProviderEnabled('network'):
-                        last_known_location = self.location_manager.getLastKnownLocation('network')
-                    if last_known_location:
-                        self.on_native_location(last_known_location)
-                        print('DEBUG: Last known location sent immediately.')
-                except Exception as e_last:
-                    print(f'Error getting last known location: {e_last}')
                 if self.location_manager.isProviderEnabled('gps'):
                     self.location_manager.requestLocationUpdates('gps', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
@@ -5744,25 +5746,30 @@ class StockApp(MDApp):
                     self.location_manager.requestLocationUpdates('network', int(min_time), float(min_distance), self.location_listener, Looper.getMainLooper())
                     providers_started = True
                 if providers_started:
-                    pass
+                    self.notify('Suivi GPS Actif (Arrière-plan)', 'success')
                 else:
                     self.notify('Veuillez activer le GPS', 'error')
             except Exception as e:
                 print(f'GPS Start Error: {e}')
-                self.notify('Erreur lors du démarrage du GPS', 'error')
+                self.notify('Erreur démarrage GPS', 'error')
         request_permissions([Permission.ACCESS_FINE_LOCATION, Permission.ACCESS_COARSE_LOCATION, Permission.WAKE_LOCK], _start_native_gps)
 
     def on_native_location(self, location):
         try:
+            if not self.is_better_location(location, getattr(self, 'current_best_location', None)):
+                return
+            self.current_best_location = location
             lat = location.getLatitude()
             lon = location.getLongitude()
             accuracy = location.getAccuracy()
+            speed = location.getSpeed() * 3.6
+            provider = location.getProvider()
             if accuracy > 50:
                 return
             timestamp = time.time()
             date_str = str(datetime.now().date())
             key = f'{int(timestamp)}_{random.randint(100, 999)}'
-            self.gps_store.put(key, lat=lat, lon=lon, timestamp=timestamp, date=date_str, synced=False)
+            self.gps_store.put(key, lat=lat, lon=lon, speed=speed, accuracy=accuracy, timestamp=timestamp, date=date_str, synced=False)
             self.sync_gps_data()
         except Exception as e:
             print(f'Error parsing location: {e}')
@@ -5775,22 +5782,69 @@ class StockApp(MDApp):
                 self.current_user_name = self.store.get('credentials').get('username')
             else:
                 return
-        unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k)['synced']]
+        unsynced_keys = [k for k in self.gps_store.keys() if not self.gps_store.get(k).get('synced', False)]
+        if not unsynced_keys:
+            return
         unsynced_keys.sort(key=lambda k: self.gps_store.get(k)['timestamp'])
-        if unsynced_keys:
-            key = unsynced_keys[0]
-            item = self.gps_store.get(key)
-            url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
-            payload = {'username': self.current_user_name, 'lat': item['lat'], 'lon': item['lon'], 'timestamp': item['timestamp']}
+        key = unsynced_keys[0]
+        item = self.gps_store.get(key)
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
+        payload = {'username': self.current_user_name, 'lat': item['lat'], 'lon': item['lon'], 'speed': item.get('speed', 0), 'timestamp': item['timestamp']}
 
-            def on_success(req, res):
+        def on_success(req, res):
+            if self.gps_store.exists(key):
                 item['synced'] = True
                 self.gps_store.put(key, **item)
                 self.sync_gps_data()
 
-            def on_fail(req, err):
-                print(f'[GPS] Sync failed for {key}: {err}')
-            UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+        def on_fail(req, err):
+            print(f'[GPS] Sync failed for {key}: {err}')
+        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_fail, on_error=on_fail, timeout=5)
+
+    def is_better_location(self, location, current_best_location):
+        if current_best_location is None:
+            return True
+        TIME_DELTA = 1000 * 60 * 2
+        time_delta = location.getTime() - current_best_location.getTime()
+        is_significantly_newer = time_delta > TIME_DELTA
+        is_significantly_older = time_delta < -TIME_DELTA
+        is_newer = time_delta > 0
+        if is_significantly_newer:
+            return True
+        elif is_significantly_older:
+            return False
+        accuracy_delta = int(location.getAccuracy() - current_best_location.getAccuracy())
+        is_less_accurate = accuracy_delta > 0
+        is_more_accurate = accuracy_delta < 0
+        is_significantly_less_accurate = accuracy_delta > 200
+        is_from_same_provider = False
+        if location.getProvider() and current_best_location.getProvider():
+            is_from_same_provider = location.getProvider() == current_best_location.getProvider()
+        if is_more_accurate:
+            return True
+        elif is_newer and (not is_less_accurate):
+            return True
+        elif is_newer and (not is_significantly_less_accurate) and is_from_same_provider:
+            return True
+        return False
+
+    def sync_gps_single(self, key, lat, lon, speed, timestamp):
+        if not self.is_server_reachable or self.sync_paused:
+            return
+        if not self.current_user_name:
+            if self.store.exists('credentials'):
+                self.current_user_name = self.store.get('credentials').get('username')
+            else:
+                return
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/update_location'
+        payload = {'username': self.current_user_name, 'lat': lat, 'lon': lon, 'speed': speed, 'timestamp': timestamp}
+
+        def on_success(req, res):
+            if self.gps_store.exists(key):
+                item = self.gps_store.get(key)
+                item['synced'] = True
+                self.gps_store.put(key, **item)
+        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, timeout=3)
 
     def on_keyboard(self, window, key, scancode, codepoint, modifier):
         if key == 27:
