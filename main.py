@@ -172,6 +172,7 @@ DEFAULT_PORT = '5000'
 # ==========================================
 KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
 # ==========================================
+
 class KalmanLatLon:
 
     def __init__(self, Q_metres_per_second):
@@ -673,9 +674,29 @@ class StockApp(MDApp):
     def _process_batch_data(self, batch, reset=False):
         rv_data = []
         is_sale = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
+        is_transfer = self.current_mode == 'transfer'
+        allowed_autre_modes = ['sale', 'invoice_sale', 'proforma', 'order_purchase', 'return_sale']
+
+        def fmt_qty(val):
+            try:
+                val = float(val)
+                if val.is_integer():
+                    return str(int(val))
+                return str(val)
+            except:
+                return '0'
         for p in batch:
             try:
                 name = self.fix_text(str(p.get('name', '')))
+                if str(p.get('name', '')).lower().startswith('autre article'):
+                    if self.current_mode not in allowed_autre_modes:
+                        continue
+                s_store = float(p.get('stock', 0) or 0)
+                s_wh = float(p.get('stock_warehouse', 0) or 0)
+                total_stock = s_store + s_wh
+                if is_transfer:
+                    if s_store <= -900000 or s_wh <= -900000 or total_stock < 0:
+                        continue
                 raw_cat = str(p.get('category', ''))
                 if raw_cat.lower() == 'none':
                     category = ''
@@ -683,15 +704,32 @@ class StockApp(MDApp):
                     category = self.fix_text(raw_cat)
                 image_path_raw = p.get('image', '')
                 final_image_source = self.get_cached_image_url(image_path_raw)
-                if is_sale:
+                if is_transfer:
+                    price_fmt = f'Qnt Tot: {fmt_qty(total_stock)}'
+                    p_color = [0.2, 0.2, 0.8, 1]
+                elif is_sale:
                     price = float(p.get('price', 0) or 0)
+                    price_fmt = f'{price:.2f} DA'
                     p_color = [0, 0.6, 0, 1] if not p.get('has_promo') else [0.5, 0, 0.5, 1]
                 else:
-                    price = float(p.get('purchase_price') or p.get('price', 0))
+                    p_price = p.get('purchase_price')
+                    if p_price is None:
+                        p_price = p.get('price', 0)
+                    price = float(p_price or 0)
+                    price_fmt = f'{price:.2f} DA'
                     p_color = [0.9, 0.5, 0, 1]
-                stock = float(p.get('stock', 0) or 0) + float(p.get('stock_warehouse', 0) or 0)
-                stock_text = 'Illimité' if stock <= -900000 else f'Qté: {(int(stock) if stock.is_integer() else stock)}'
-                rv_data.append({'text_name': name, 'text_category': category, 'text_price': f'{price:.2f} DA', 'text_stock': stock_text, 'icon_name': 'package-variant' if stock > 0 or stock <= -900000 else 'package-variant-closed', 'icon_color': [0, 0.6, 0, 1] if stock > 0 else [0.8, 0, 0, 1], 'price_color': p_color, 'image_url': final_image_source, 'raw_data': p})
+                stock_text = ''
+                if is_transfer:
+                    stock_text = f'Mag: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
+                elif s_store <= -900000 or s_wh <= -900000:
+                    stock_text = 'Illimité'
+                elif s_wh != 0:
+                    stock_text = f'Qté: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
+                else:
+                    stock_text = f'Qté: {fmt_qty(s_store)}'
+                icon_name = 'package-variant' if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else 'package-variant-closed'
+                icon_color = [0, 0.6, 0, 1] if total_stock > 0 or s_store <= -900000 else [0.8, 0, 0, 1]
+                rv_data.append({'text_name': name, 'text_category': category, 'text_price': price_fmt, 'text_stock': stock_text, 'icon_name': icon_name, 'icon_color': icon_color, 'price_color': p_color, 'image_url': final_image_source, 'raw_data': p})
             except Exception as e:
                 print(f'Error processing item: {e}')
                 continue
@@ -734,7 +772,7 @@ class StockApp(MDApp):
         rv_data = []
         is_sale = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
         is_transfer = self.current_mode == 'transfer'
-        allowed_autre_modes = ['sale', 'invoice_sale', 'proforma', 'order_purchase']
+        allowed_autre_modes = ['sale', 'invoice_sale', 'proforma', 'order_purchase', 'return_sale']
 
         def fmt_qty(val):
             try:
@@ -753,8 +791,9 @@ class StockApp(MDApp):
                 s_store = float(p.get('stock', 0) or 0)
                 s_wh = float(p.get('stock_warehouse', 0) or 0)
                 total_stock = s_store + s_wh
-                if is_transfer and total_stock < -900000:
-                    continue
+                if is_transfer:
+                    if s_store <= -900000 or s_wh <= -900000 or total_stock < 0:
+                        continue
                 price_fmt = ''
                 price_color = [0, 0, 0, 1]
                 stock_text = ''
@@ -768,23 +807,25 @@ class StockApp(MDApp):
                         price_fmt = f'{price:.2f} DA'
                         price_color = [0, 0.6, 0, 1]
                     else:
-                        p_price = p.get('purchase_price', 0)
+                        p_price = p.get('purchase_price')
                         if p_price is None:
                             p_price = p.get('price', 0)
                         price = float(p_price or 0)
                         price_fmt = f'{price:.2f} DA'
                         price_color = [0.9, 0.5, 0, 1]
-                    if total_stock < -900000:
+                    if s_store <= -900000 or s_wh <= -900000:
                         stock_text = 'Illimité'
-                    elif s_wh == 0:
-                        stock_text = f'Qté: {fmt_qty(s_store)}'
-                    else:
+                    elif s_wh != 0:
                         stock_text = f'Qté: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
-                icon = 'package-variant' if total_stock > 0 or total_stock < -900000 else 'package-variant-closed'
-                icon_col = [0, 0.6, 0, 1] if total_stock > 0 or total_stock < -900000 else [0.8, 0, 0, 1]
+                    else:
+                        stock_text = f'Qté: {fmt_qty(s_store)}'
+                icon = 'package-variant' if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else 'package-variant-closed'
+                icon_col = [0, 0.6, 0, 1] if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else [0.8, 0, 0, 1]
                 raw_name = str(p.get('name', 'Inconnu'))
                 display_name = self.fix_text(raw_name)
-                rv_data.append({'name': display_name, 'price_text': price_fmt, 'stock_text': stock_text, 'icon': icon, 'icon_color': icon_col, 'price_color': price_color, 'raw_data': p})
+                image_path_raw = p.get('image', '')
+                final_image_source = self.get_cached_image_url(image_path_raw)
+                rv_data.append({'text_name': display_name, 'text_category': self.fix_text(str(p.get('category', ''))), 'text_price': price_fmt, 'text_stock': stock_text, 'icon_name': icon, 'icon_color': icon_col, 'price_color': price_color, 'image_url': final_image_source, 'raw_data': p})
         except Exception as e:
             print(f'Data Prep Error: {e}')
         self._apply_search_results(rv_data)
@@ -1335,6 +1376,7 @@ class StockApp(MDApp):
         self.status_bar_bg.add_widget(self.status_bar_label)
         self.root_box.add_widget(self.status_bar_bg)
         self._heartbeat_event = Clock.schedule_interval(self.check_server_heartbeat, 5)
+        self.maps_enabled = False
         return self.root_box
 
     def get_device_id(self):
@@ -2338,6 +2380,9 @@ class StockApp(MDApp):
     def save_store_info_callback(self, req, res):
         if res:
             self.store.put('print_header', name=res.get('name', 'MagPro Store'), address=res.get('address', ''), phone=res.get('phone', ''))
+            self.maps_enabled = res.get('maps_enabled', False)
+            if DEBUG:
+                print(f'[INFO] Maps Enabled on Server: {self.maps_enabled}')
 
     def _on_heartbeat_success(self):
         self.is_server_reachable = True
@@ -2538,6 +2583,9 @@ class StockApp(MDApp):
     def open_delivery_map(self):
         if not self.is_server_reachable:
             self.notify('Serveur inaccessible (Hors Ligne)', 'error')
+            return
+        if not getattr(self, 'maps_enabled', False):
+            self.notify("Cette fonctionnalité n'est pas activée sur le serveur (License requise)", 'error')
             return
         self.notify('Sécurisation du lien...', 'info')
         api_url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/get_secure_map_link'
@@ -3286,7 +3334,10 @@ class StockApp(MDApp):
             self.load_more_products(reset=True)
 
     def fetch_products(self):
-        UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/products', on_success=self.on_products_loaded)
+        user_param = self.current_user_name
+        import urllib.parse
+        encoded_user = urllib.parse.quote(user_param)
+        UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/products?username={encoded_user}', on_success=self.on_products_loaded)
 
     def on_products_loaded(self, req, res):
         try:
