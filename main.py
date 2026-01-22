@@ -170,9 +170,8 @@ reshaper = arabic_reshaper.ArabicReshaper(configuration={'delete_harakat': True,
 # ==========================================
 DEFAULT_PORT = '5000'
 # ==========================================
-KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 1\n\n        MDLabel:\n            text: root.text_primary\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            text_size: self.width, None\n            halign: \'left\'\n            font_name: \'ArabicFont\'\n            markup: True\n\n        MDLabel:\n            text: root.text_secondary\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n\n    MDLabel:\n        text: root.text_amount\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: None\n        width: dp(110)\n        font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
+KV_BUILDER = '\n<LeftButtonsContainer>:\n    adaptive_width: True\n    spacing: "4dp"\n    padding: "4dp"\n    pos_hint: {"center_y": .5}\n\n<RightButtonsContainer>:\n    adaptive_width: True\n    spacing: "8dp"\n    pos_hint: {"center_y": .5}\n\n<CustomHistoryItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    radius: [10]\n    elevation: 1\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap_action()\n    \n    MDIcon:\n        icon: root.icon\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n        \n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        spacing: dp(4)\n        size_hint_x: 0.5\n        \n        MDLabel:\n            text: root.text\n            bold: True\n            font_style: "Subtitle1"\n            font_size: "16sp"\n            theme_text_color: "Primary"\n            shorten: True\n            shorten_from: \'right\'\n            font_name: \'ArabicFont\'\n            markup: True\n            \n        MDLabel:\n            text: root.secondary_text\n            font_style: "Caption"\n            theme_text_color: "Secondary"\n            font_name: \'ArabicFont\'\n            \n    MDLabel:\n        text: root.right_text\n        halign: "right"\n        pos_hint: {"center_y": .5}\n        font_style: "Subtitle2"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        size_hint_x: 0.3\n        font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "pencil"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.8, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_edit_action()\n\n<ProductRecycleItem>:\n    orientation: \'vertical\'\n    size_hint_y: None\n    height: dp(90)\n    padding: 0\n    spacing: 0\n    \n    MDCard:\n        orientation: \'horizontal\'\n        padding: dp(10)\n        spacing: dp(10)\n        radius: [8]\n        elevation: 1\n        ripple_behavior: True\n        on_release: root.on_tap()\n        md_bg_color: (1, 1, 1, 1)\n        \n        # --- قسم الصورة والأيقونة ---\n        MDCard:\n            size_hint: None, None\n            size: dp(50), dp(50)\n            radius: [5]\n            elevation: 0\n            md_bg_color: (0, 0, 0, 0)\n            pos_hint: {\'center_y\': .5}\n            ripple_behavior: True\n            on_release: root.on_image_tap()\n            \n            MDFloatLayout:\n                # تظهر الأيقونة فقط في حالة عدم وجود صورة\n                MDIcon:\n                    icon: root.icon_name\n                    theme_text_color: "Custom"\n                    text_color: root.icon_color\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    font_size: \'32sp\'\n                    opacity: 1 if not root.image_source else 0\n\n                # تظهر الصورة وتخفي الأيقونة\n                FitImage:\n                    source: root.image_source\n                    radius: [5]\n                    pos_hint: {\'center_x\': .5, \'center_y\': .5}\n                    opacity: 1 if root.image_source else 0\n        # ---------------------------\n\n        MDBoxLayout:\n            orientation: \'vertical\'\n            pos_hint: {\'center_y\': .5}\n            spacing: dp(5)\n            \n            MDLabel:\n                text: root.text_name\n                font_style: "Subtitle1"\n                bold: True\n                text_size: self.width, None\n                max_lines: 2\n                halign: \'left\'\n                font_size: \'17sp\'\n                theme_text_color: "Custom"\n                text_color: (0.1, 0.1, 0.1, 1)\n                font_name: \'ArabicFont\'\n            \n            MDBoxLayout:\n                orientation: \'horizontal\'\n                spacing: dp(10)\n                \n                MDLabel:\n                    text: root.text_price\n                    font_style: "H6"\n                    theme_text_color: "Custom"\n                    text_color: root.price_color\n                    bold: True\n                    size_hint_x: 0.6\n                    font_size: \'20sp\'\n                    font_name: \'ArabicFont\'\n                \n                MDLabel:\n                    text: root.text_stock\n                    theme_text_color: "Custom"\n                    text_color: (0.1, 0.1, 0.1, 1)\n                    halign: \'right\'\n                    size_hint_x: 0.4\n                    bold: True\n                    font_size: \'16sp\'\n                    font_name: \'ArabicFont\'\n\n<ProductRecycleView>:\n    viewclass: \'ProductRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(95)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(4)\n        padding: dp(5)\n\n<HistoryRecycleItem>:\n    orientation: "vertical"\n    size_hint_y: None\n    height: dp(135)\n    padding: dp(12)\n    spacing: dp(8)\n    radius: [15]\n    elevation: 2\n    ripple_behavior: True\n    md_bg_color: root.bg_color\n    on_release: root.on_tap()\n\n    # --- السطر الأول: الأيقونة + النوع + رقم الوصل ---\n    MDBoxLayout:\n        orientation: "horizontal"\n        size_hint_y: None\n        height: dp(40)\n        spacing: dp(10)\n\n        # خلفية دائرية للأيقونة\n        MDCard:\n            size_hint: None, None\n            size: dp(40), dp(40)\n            radius: [20]\n            md_bg_color: (0.95, 0.95, 0.95, 1)\n            elevation: 0\n            pos_hint: {"center_y": .5}\n            \n            MDIcon:\n                icon: root.icon_name\n                theme_text_color: "Custom"\n                text_color: root.icon_color\n                pos_hint: {"center_x": .5, "center_y": .5}\n                font_size: "24sp"\n\n        MDBoxLayout:\n            orientation: "vertical"\n            spacing: dp(2)\n            pos_hint: {"center_y": .5}\n\n            # 1. نوع العملية\n            MDLabel:\n                text: root.text_type\n                bold: True\n                font_style: "Subtitle1"\n                theme_text_color: "Primary"\n                font_name: \'ArabicFont\'\n                halign: "left"\n                valign: "bottom"\n\n            # 2. رقم الوصل - المستخدم\n            MDLabel:\n                text: root.text_ref\n                font_style: "Caption"\n                theme_text_color: "Secondary"\n                font_name: \'ArabicFont\'\n                halign: "left"\n                valign: "top"\n\n    # --- السطر الثاني: الاسم (يسمح بالالتفاف) ---\n    # 3. الاسم\n    MDLabel:\n        text: root.text_entity\n        font_style: "H6"\n        font_size: "17sp"\n        bold: True\n        theme_text_color: "Custom"\n        text_color: (0.1, 0.1, 0.1, 1)\n        font_name: \'ArabicFont\'\n        size_hint_y: None\n        height: self.texture_size[1]\n        text_size: self.width, None\n        max_lines: 2\n        halign: "left"\n\n    # مساحة مرنة\n    MDBoxLayout:\n        size_hint_y: 1\n\n    # --- السطر الثالث: الوقت + السعر ---\n    MDBoxLayout:\n        orientation: "horizontal"\n        size_hint_y: None\n        height: dp(25)\n        \n        # 5. الوقت\n        MDLabel:\n            text: root.text_date\n            font_style: "Caption"\n            theme_text_color: "Hint"\n            halign: "left"\n            valign: "center"\n            size_hint_x: 0.4\n            font_name: \'ArabicFont\'\n\n        # 4. السعر\n        MDLabel:\n            text: root.text_amount\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Custom"\n            text_color: root.icon_color\n            halign: "right"\n            valign: "center"\n            font_size: "18sp"\n            size_hint_x: 0.6\n            font_name: \'ArabicFont\'\n\n<HistoryRecycleView>:\n    viewclass: \'HistoryRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(140)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(5)\n        padding: dp(5)\n\n<EntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(15)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    radius: [0]\n    on_release: root.on_tap()\n\n    MDIcon:\n        icon: root.icon_name\n        theme_text_color: "Custom"\n        text_color: root.icon_color\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            valign: \'center\'\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            valign: \'top\'\n\n<EntityRecycleView>:\n    viewclass: \'EntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<MgmtEntityRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(80)\n    padding: dp(10)\n    spacing: dp(5)\n    ripple_behavior: True\n    md_bg_color: (1, 1, 1, 1)\n    on_release: root.on_pay()\n\n    MDIcon:\n        icon: "account-circle"\n        theme_text_color: "Custom"\n        text_color: (0.5, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        font_size: "32sp"\n        size_hint_x: None\n        width: dp(40)\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        size_hint_x: 1\n        spacing: dp(2)\n        padding: [dp(10), 0, 0, 0]\n\n        MDLabel:\n            text: root.text_name\n            bold: True\n            font_style: "Subtitle1"\n            font_name: \'ArabicFont\'\n            theme_text_color: "Custom"\n            text_color: (0.1, 0.1, 0.1, 1)\n            shorten: True\n            shorten_from: \'right\'\n            halign: "left"\n\n        MDLabel:\n            text: root.text_balance\n            font_style: "Caption"\n            font_name: \'ArabicFont\'\n            markup: True\n            theme_text_color: "Secondary"\n            halign: "left"\n\n    MDIconButton:\n        icon: "clock-time-eight-outline"\n        theme_text_color: "Custom"\n        text_color: (0, 0.5, 0.5, 1)\n        pos_hint: {"center_y": .5}\n        on_release: root.on_history()\n\n<MgmtEntityRecycleView>:\n    viewclass: \'MgmtEntityRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(80)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(2)\n        padding: dp(0)\n\n<CartRecycleItem>:\n    orientation: "horizontal"\n    size_hint_y: None\n    height: dp(85)\n    padding: [dp(15), 0, 0, 0]\n    md_bg_color: 1, 1, 1, 1\n    radius: [0]\n    ripple_behavior: True\n    on_release: root.on_tap()\n\n    MDBoxLayout:\n        orientation: "vertical"\n        pos_hint: {"center_y": .5}\n        adaptive_height: True\n        spacing: dp(4)\n\n        MDLabel:\n            text: root.text_name\n            font_style: "Subtitle1"\n            bold: True\n            theme_text_color: "Primary"\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n        MDLabel:\n            text: root.text_details\n            font_size: "16sp"\n            theme_text_color: "Custom"\n            text_color: root.details_color\n            bold: True\n            adaptive_height: True\n            font_name: \'ArabicFont\'\n\n    MDIconButton:\n        icon: "delete"\n        theme_text_color: "Custom"\n        text_color: (0.9, 0, 0, 1)\n        pos_hint: {"center_y": .5}\n        icon_size: "24sp"\n        on_release: root.on_delete()\n\n<CartRecycleView>:\n    viewclass: \'CartRecycleItem\'\n    RecycleBoxLayout:\n        default_size: None, dp(85)\n        default_size_hint: 1, None\n        size_hint_y: None\n        height: self.minimum_height\n        orientation: \'vertical\'\n        spacing: dp(1)\n'
 # ==========================================
-
 class KalmanLatLon:
 
     def __init__(self, Q_metres_per_second):
@@ -252,29 +251,43 @@ class SmartTextField(MDTextField):
         super().__init__(**kwargs)
         self.font_name = 'ArabicFont'
         self.font_name_hint_text = 'ArabicFont'
+        self.keyboard_suggestions = False
+        if self.text:
+            self._raw_text = self.text
+            self._update_display()
 
     def insert_text(self, substring, from_undo=False):
         self._raw_text += substring
-        reshaped = self._input_reshaper.reshape(self._raw_text)
-        bidi_text = get_display(reshaped)
-        self.text = bidi_text
-        self._update_alignment(self._raw_text)
+        self._update_display()
 
     def do_backspace(self, from_undo=False, mode='bkspc'):
         if not self._raw_text:
             return
         self._raw_text = self._raw_text[:-1]
-        reshaped = self._input_reshaper.reshape(self._raw_text)
-        bidi_text = get_display(reshaped)
-        self.text = bidi_text
+        self._update_display()
+
+    def _update_display(self):
+        if self._raw_text:
+            try:
+                reshaped = self._input_reshaper.reshape(self._raw_text)
+                bidi_text = get_display(reshaped)
+                self.text = bidi_text
+            except Exception:
+                self.text = self._raw_text
+        else:
+            self.text = ''
         self._update_alignment(self._raw_text)
+        Clock.schedule_once(self._set_cursor_to_end, 0)
+
+    def _set_cursor_to_end(self, dt):
+        self.cursor = (len(self.text), 0)
 
     def _update_alignment(self, text):
         if not text:
             self.halign = 'left'
             self.base_direction = 'ltr'
             return
-        has_arabic = any(('\u0600' <= c <= 'ۿ' for c in text))
+        has_arabic = any(('\u0600' <= c <= 'ۿ' or 'ݐ' <= c <= 'ݿ' or 'ﭐ' <= c <= 'ﰿ' or ('ﹰ' <= c <= '\ufeff') for c in text))
         if has_arabic:
             self.halign = 'right'
             self.base_direction = 'rtl'
@@ -286,6 +299,11 @@ class SmartTextField(MDTextField):
         if not self._raw_text and self.text:
             return self.text
         return self._raw_text
+
+    def on_text(self, instance, value):
+        if value == '' and self._raw_text != '':
+            self._raw_text = ''
+        pass
 
 class LeftButtonsContainer(ILeftBody, MDBoxLayout):
     adaptive_width = True
@@ -333,8 +351,10 @@ class ProductRecycleItem(RecycleDataViewBehavior, MDBoxLayout):
 
 class HistoryRecycleItem(RecycleDataViewBehavior, MDCard):
     index = None
-    text_primary = StringProperty('')
-    text_secondary = StringProperty('')
+    text_type = StringProperty('')
+    text_ref = StringProperty('')
+    text_entity = StringProperty('')
+    text_date = StringProperty('')
     text_amount = StringProperty('')
     icon_name = StringProperty('file')
     icon_color = ColorProperty([0, 0, 0, 1])
@@ -346,8 +366,10 @@ class HistoryRecycleItem(RecycleDataViewBehavior, MDCard):
     def refresh_view_attrs(self, rv, index, data):
         self.index = index
         app = MDApp.get_running_app()
-        self.text_primary = app.fix_text(data.get('raw_text', ''))
-        self.text_secondary = app.fix_text(data.get('raw_sec', ''))
+        self.text_type = app.fix_text(data.get('type_str', ''))
+        self.text_ref = app.fix_text(data.get('ref_str', ''))
+        self.text_entity = app.fix_text(data.get('entity_str', ''))
+        self.text_date = data.get('date_str', '')
         self.text_amount = data.get('amount_text', '')
         self.icon_name = data.get('icon', 'file')
         self.icon_color = data.get('icon_color', [0, 0, 0, 1])
@@ -885,20 +907,31 @@ class StockApp(MDApp):
             self.notify(f'Erreur Bluetooth: {e}', 'error')
 
     def select_printer(self, name, mac):
-        if hasattr(self, 'printer_name_field'):
+        current_auto = False
+        if self.store.exists('printer_config'):
+            current_auto = self.store.get('printer_config').get('auto', False)
+        self.store.put('printer_config', name=name, mac=mac, auto=current_auto)
+        self.temp_selected_mac = mac
+        if hasattr(self, 'printer_name_field') and self.printer_name_field:
             self.printer_name_field.text = name
             self.printer_name_field.helper_text = f'ID: {mac}'
-        self.temp_selected_mac = mac
         if self.bt_dialog:
             self.bt_dialog.dismiss()
-        self.notify(f'Sélectionné: {name}', 'success')
+        if hasattr(self, 'dialog') and self.dialog:
+            self.dialog.dismiss()
+            self.open_ip_settings()
+        self.notify(f'تم حفظ الطابعة: {name}', 'success')
 
     def clear_printer_selection(self, instance):
-        if hasattr(self, 'printer_name_field'):
+        self.store.put('printer_config', name='', mac='', auto=False)
+        self.temp_selected_mac = ''
+        if hasattr(self, 'printer_name_field') and self.printer_name_field:
             self.printer_name_field.text = ''
             self.printer_name_field.helper_text = 'Imprimante non définie'
-        self.temp_selected_mac = ''
-        self.notify('Imprimante effacée', 'info')
+        if hasattr(self, 'dialog') and self.dialog:
+            self.dialog.dismiss()
+            self.open_ip_settings()
+        self.notify('تم حذف الطابعة', 'info')
 
     def print_ticket_bluetooth(self, transaction_data):
         if platform != 'android':
@@ -2124,88 +2157,44 @@ class StockApp(MDApp):
         from kivy.core.clipboard import Clipboard
         is_edit = entity is not None
         title = 'Modifier Fiche' if is_edit else 'Ajouter Nouveau'
+        old_link = str(entity.get('gps_location', '')).strip() if is_edit else ''
+        old_lat = str(entity.get('lat', '')).strip() if is_edit else ''
+        old_lon = str(entity.get('lon', '')).strip() if is_edit else ''
         val_name = entity.get('name', '') if is_edit else ''
         val_phone = entity.get('phone', '') if is_edit else ''
         val_address = entity.get('address', '') if is_edit else ''
         val_activity = entity.get('activity', '') if is_edit else ''
-        val_email = entity.get('email', '') if is_edit else ''
         val_rc = entity.get('rc', '') if is_edit else ''
         val_nif = entity.get('nif', '') if is_edit else ''
-        val_nis = entity.get('nis', '') if is_edit else ''
-        val_nai = entity.get('nai', '') if is_edit else ''
-        val_gps = entity.get('gps_location', '') if is_edit else ''
-        raw_cat = str(entity.get('price_category', '')).strip() if is_edit else ''
-        if raw_cat in ['Gros', 'جملة']:
-            display_cat = 'Gros'
-        elif raw_cat in ['Demi-Gros', 'نصف جملة']:
-            display_cat = 'Demi-Gros'
-        else:
-            display_cat = 'Détail'
         scroll = MDScrollView(size_hint_y=None, height=dp(600))
         main_box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15), padding=[dp(10), dp(10), dp(10), dp(20)])
-        card_info = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.99, 0.99, 0.99, 1))
-        header_info = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
-        header_info.add_widget(MDIcon(icon='account-box-outline', theme_text_color='Primary', font_size='22sp'))
-        header_info.add_widget(MDLabel(text='Identité', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
-        card_info.add_widget(header_info)
-        card_info.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        card_info = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+        card_info.add_widget(MDLabel(text='IDENTITÉ', bold=True, theme_text_color='Primary', font_style='Subtitle2'))
         f_name = SmartTextField(text=val_name, hint_text='Nom Complet *', required=True, icon_right='account')
         f_activity = SmartTextField(text=val_activity, hint_text='Activité', icon_right='briefcase')
         card_info.add_widget(f_name)
         card_info.add_widget(f_activity)
         main_box.add_widget(card_info)
-        card_contact = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.96, 0.98, 1, 1))
-        header_contact = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
-        header_contact.add_widget(MDIcon(icon='card-account-phone-outline', theme_text_color='Primary', font_size='22sp'))
-        header_contact.add_widget(MDLabel(text='Coordonnées & GPS', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
-        card_contact.add_widget(header_contact)
-        card_contact.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        card_contact = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+        card_contact.add_widget(MDLabel(text='COORDONNÉES & GPS', bold=True, theme_text_color='Primary', font_style='Subtitle2'))
         f_phone = SmartTextField(text=val_phone, hint_text='Téléphone', input_filter='int', icon_right='phone')
         f_address = SmartTextField(text=val_address, hint_text='Adresse', icon_right='map-marker')
-        f_email = SmartTextField(text=val_email, hint_text='Email', icon_right='email')
         gps_box = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
-        f_gps = SmartTextField(text=val_gps, hint_text='Lien GPS (Google Maps)', icon_right='google-maps', size_hint_x=0.85)
-        btn_paste_gps = MDIconButton(icon='content-paste', theme_text_color='Custom', text_color=self.theme_cls.primary_color, pos_hint={'center_y': 0.5}, on_release=lambda x: setattr(f_gps, 'text', Clipboard.paste()))
+        f_gps = SmartTextField(text=old_link, hint_text='Lien Google Maps (Brut)', icon_right='google-maps', size_hint_x=0.85)
+        btn_paste = MDIconButton(icon='content-paste', on_release=lambda x: setattr(f_gps, 'text', Clipboard.paste()))
         gps_box.add_widget(f_gps)
-        gps_box.add_widget(btn_paste_gps)
+        gps_box.add_widget(btn_paste)
         card_contact.add_widget(f_phone)
         card_contact.add_widget(f_address)
         card_contact.add_widget(gps_box)
-        card_contact.add_widget(f_email)
         main_box.add_widget(card_contact)
-        f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True, icon_right='tag')
-
-        def on_cat_touch(instance, touch):
-            if instance.collide_point(*touch.pos):
-                self.show_price_cat_selector(instance)
-                return True
-            return False
-        f_price_cat.bind(on_touch_down=on_cat_touch)
-        if self.current_entity_type_mgmt == 'account':
-            card_comm = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(1, 0.98, 0.96, 1))
-            header_comm = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
-            header_comm.add_widget(MDIcon(icon='store-cog-outline', theme_text_color='Primary', font_size='22sp'))
-            header_comm.add_widget(MDLabel(text='Commercial', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
-            card_comm.add_widget(header_comm)
-            card_comm.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
-            card_comm.add_widget(f_price_cat)
-            main_box.add_widget(card_comm)
-        card_fisc = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.95, 0.95, 0.95, 1))
-        header_fisc = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
-        header_fisc.add_widget(MDIcon(icon='file-document-multiple-outline', theme_text_color='Primary', font_size='22sp'))
-        header_fisc.add_widget(MDLabel(text='Information Fiscale', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
-        card_fisc.add_widget(header_fisc)
-        card_fisc.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        card_fisc = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
+        card_fisc.add_widget(MDLabel(text='FISCALITÉ', bold=True, theme_text_color='Primary', font_style='Subtitle2'))
         f_rc = SmartTextField(text=val_rc, hint_text='N° RC')
         f_nif = SmartTextField(text=val_nif, hint_text='N.I.F')
-        f_nis = SmartTextField(text=val_nis, hint_text='N.I.S')
-        f_nai = SmartTextField(text=val_nai, hint_text='N.A.I')
         card_fisc.add_widget(f_rc)
         card_fisc.add_widget(f_nif)
-        card_fisc.add_widget(f_nis)
-        card_fisc.add_widget(f_nai)
         main_box.add_widget(card_fisc)
-        footer_box = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(10), 0, 0])
 
         def save(x):
             name_val = f_name.get_value().strip()
@@ -2213,44 +2202,21 @@ class StockApp(MDApp):
                 f_name.error = True
                 self.notify('Nom obligatoire', 'error')
                 return
-            cat_ar = 'تجزئة'
-            if self.current_entity_type_mgmt == 'account':
-                selected_cat_fr = f_price_cat.text
-                if selected_cat_fr == 'Gros':
-                    cat_ar = 'جملة'
-                elif selected_cat_fr == 'Demi-Gros':
-                    cat_ar = 'نصف جملة'
-                else:
-                    cat_ar = 'تجزئة'
-            gps_txt = f_gps.get_value().strip()
-            lat_val, lon_val = ('', '')
-            if gps_txt:
-                try:
-                    patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
-                    for pattern in patterns:
-                        match = re.search(pattern, gps_txt)
-                        if match:
-                            found_lat, found_lon = match.groups()
-                            if '!3d' in pattern:
-                                lat_val, lon_val = (found_lat, found_lon)
-                                break
-                            if '@' in pattern:
-                                if not lat_val:
-                                    lat_val, lon_val = (found_lat, found_lon)
-                            else:
-                                lat_val, lon_val = (found_lat, found_lon)
-                                break
-                except Exception as e:
-                    print(f'GPS Parse Error: {e}')
-            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': gps_txt, 'lat': lat_val, 'lon': lon_val, 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
-            if self.is_server_reachable:
-                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
+            new_link = f_gps.get_value().strip()
+            if is_edit and new_link == old_link and old_lat and old_lon:
+                lat_to_send = old_lat
+                lon_to_send = old_lon
             else:
-                self.notify('Impossible: Mode Hors Ligne', 'error')
-        btn_save = MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=1, height=dp(50), elevation=2, on_release=save)
-        btn_cancel = MDRaisedButton(text='ANNULER', md_bg_color=(0.9, 0.9, 0.9, 1), text_color=(0.3, 0.3, 0.3, 1), size_hint_x=1, height=dp(50), elevation=0, on_release=lambda x: self.ae_dialog.dismiss())
-        footer_box.add_widget(btn_save)
-        footer_box.add_widget(btn_cancel)
+                lat_to_send = ''
+                lon_to_send = ''
+            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': new_link, 'lat': lat_to_send, 'lon': lon_to_send, 'activity': f_activity.get_value().strip(), 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'id': entity.get('id') if is_edit else None}
+            if self.is_server_reachable:
+                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Enregistré avec succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
+            else:
+                self.notify('Serveur inaccessible', 'error')
+        footer_box = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True)
+        footer_box.add_widget(MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), size_hint_x=1, on_release=save))
+        footer_box.add_widget(MDFlatButton(text='ANNULER', text_color=(0.3, 0.3, 0.3, 1), size_hint_x=1, on_release=lambda x: self.ae_dialog.dismiss()))
         main_box.add_widget(footer_box)
         scroll.add_widget(main_box)
         self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll, size_hint=(0.98, 0.96))
@@ -4121,10 +4087,14 @@ class StockApp(MDApp):
 
     def show_entity_selection_dialog(self, x, next_action=None):
         self.pending_entity_next_action = next_action
-        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(600))
-        self.entity_search = SmartTextField(hint_text='Rechercher...', icon_right='magnify')
+        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(600), spacing=dp(10))
+        search_layout = MDBoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(55))
+        self.entity_search = SmartTextField(hint_text='Rechercher...', icon_right='magnify', size_hint_x=0.85, pos_hint={'center_y': 0.5})
         self.entity_search.bind(text=self.filter_entities)
-        content.add_widget(self.entity_search)
+        btn_scan = MDIconButton(icon='qrcode-scan', theme_text_color='Custom', text_color=(1, 1, 1, 1), md_bg_color=(0.2, 0.2, 0.2, 1), pos_hint={'center_y': 0.5}, on_release=self.scan_entity_for_selection)
+        search_layout.add_widget(self.entity_search)
+        search_layout.add_widget(btn_scan)
+        content.add_widget(search_layout)
         self.rv_entity = EntityRecycleView()
         content.add_widget(self.rv_entity)
         if self.current_mode in ['sale', 'return_sale', 'client_payment', 'invoice_sale', 'proforma']:
@@ -4134,8 +4104,13 @@ class StockApp(MDApp):
             self.entities_source = self.all_suppliers
             title_text = 'Choisir un Fournisseur'
         self.populate_entity_list(self.entities_source)
-        self.entity_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, 0.8))
+        self.entity_dialog = MDDialog(title=title_text, type='custom', content_cls=content, size_hint=(0.9, 0.85))
         self.entity_dialog.open()
+
+    def scan_entity_for_selection(self, instance):
+        self.target_scan_mode = 'entity_selection_auto'
+        self.target_scan_field = None
+        self.open_barcode_scanner(None)
 
     def recalculate_cart_prices(self):
         if not self.cart or not self.selected_entity:
@@ -4757,21 +4732,19 @@ class StockApp(MDApp):
             elif doc_type == 'BI':
                 icon_name = 'database-plus'
                 full_doc_name = 'Bon Initial'
-            header_text = f'{full_doc_name} - {entity_name}'
-            sec_text = f'Local • {dt_str} • (En attente)'
-            self.history_rv_data.append({'raw_text': header_text, 'raw_sec': sec_text, 'amount_text': amount_text, 'icon': icon_name, 'icon_color': icon_color, 'bg_color': bg_col, 'is_local': True, 'key': k, 'raw_data': None})
+            ref_str = f'Local • {self.current_user_name}'
+            self.history_rv_data.append({'type_str': full_doc_name, 'ref_str': ref_str, 'entity_str': entity_name, 'date_str': dt_str, 'amount_text': amount_text, 'icon': icon_name, 'icon_color': icon_color, 'bg_color': bg_col, 'is_local': True, 'key': k, 'raw_data': None})
         self.rv_history.data = self.history_rv_data
         if self.is_server_reachable:
             url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/history?date={target_date}'
             UrlRequest(url, on_success=self.on_history_server_loaded)
         elif not self.history_rv_data:
-            self.rv_history.data = [{'raw_text': 'Aucune opération locale.', 'raw_sec': '', 'amount_text': '', 'icon': 'alert-circle-outline', 'icon_color': (0.5, 0.5, 0.5, 1), 'bg_color': (1, 1, 1, 1), 'is_local': False, 'key': '', 'raw_data': None}]
+            self.rv_history.data = []
 
     def on_history_server_loaded(self, req, result):
         if not result:
             if not any((item['is_local'] for item in self.history_rv_data)):
-                self.history_rv_data.append({'raw_text': 'Aucune opération serveur.', 'raw_sec': '', 'amount_text': '', 'icon': 'alert-circle-outline', 'icon_color': (0.5, 0.5, 0.5, 1), 'bg_color': (1, 1, 1, 1), 'is_local': False, 'key': '', 'raw_data': None})
-                self.rv_history.data = self.history_rv_data
+                pass
             return
         main_doc_prefixes = ['BV', 'BA', 'RC', 'RF', 'TR', 'FP', 'DP', 'BI', 'FC', 'FF']
         default_names = ['زبون افتراضي', 'مورد افتراضي', 'DEFAULT_CUSTOMER', 'DEFAULT_SUPPLIER', 'Comptoir', 'Fournisseur']
@@ -4802,14 +4775,14 @@ class StockApp(MDApp):
             if not is_main_doc and has_doc_ref:
                 continue
             full_doc_name = self.DOC_TRANSLATIONS.get(prefix, desc)
-            bg_col = (0.95, 0.98, 1, 1)
+            bg_col = (0.98, 0.98, 1, 1)
             icon_name = 'file-document'
             icon_color = (0, 0.5, 0.8, 1)
             amount_text = f'{abs(amount):.2f} DA'
             if is_transfer:
                 full_doc_name = 'Transfert Stock'
                 icon_name = 'compare-horizontal'
-                bg_col = (0.95, 0.9, 1, 1)
+                bg_col = (0.96, 0.94, 1, 1)
                 amount_text = 'Stock'
                 icon_color = (0.5, 0, 0.5, 1)
             elif not is_main_doc:
@@ -4862,9 +4835,9 @@ class StockApp(MDApp):
                 icon_name = 'database-plus'
                 full_doc_name = 'Bon Initial'
             clean_desc = desc.replace('Versement (Excédent)', 'Versement').replace('Règlement (Excédent)', 'Règlement')
-            final_title = f'{full_doc_name} - {entity_display}'
-            final_desc = f"{clean_desc} • {item['user']} • {item['time']}"
-            self.history_rv_data.append({'raw_text': final_title, 'raw_sec': final_desc, 'amount_text': amount_text, 'icon': icon_name, 'icon_color': icon_color, 'bg_color': bg_col, 'is_local': False, 'key': '', 'raw_data': item})
+            ref_str = f"{clean_desc} • {item.get('user', '')}"
+            time_str = item.get('time', '').split(' ')[1] if ' ' in item.get('time', '') else item.get('time', '')
+            self.history_rv_data.append({'type_str': full_doc_name, 'ref_str': ref_str, 'entity_str': entity_display, 'date_str': time_str, 'amount_text': amount_text, 'icon': icon_name, 'icon_color': icon_color, 'bg_color': bg_col, 'is_local': False, 'key': '', 'raw_data': item})
         self.rv_history.data = self.history_rv_data
         self.rv_history.refresh_from_data()
 
@@ -5642,6 +5615,12 @@ class StockApp(MDApp):
             self.play_sound('success')
             self.close_barcode_scanner()
             return
+        if getattr(self, 'target_scan_mode', None) == 'entity':
+            self.process_entity_scan_result(code)
+            return
+        if getattr(self, 'target_scan_mode', None) == 'entity_selection_auto':
+            self.process_entity_selection_auto(code)
+            return
         prod = None
         for p in self.all_products_raw:
             p_code = str(p.get('barcode', '')).strip()
@@ -5660,6 +5639,30 @@ class StockApp(MDApp):
         else:
             self.play_sound('error')
             self.show_not_found_alert(code)
+
+    def process_entity_selection_auto(self, code):
+        source_list = self.entities_source
+        found_entity = None
+        clean_code = code.strip()
+        for entity in source_list:
+            if clean_code == str(entity.get('fidelity_card_number', '')).strip():
+                found_entity = entity
+                break
+            if clean_code == str(entity.get('phone', '')).strip():
+                found_entity = entity
+                break
+            if clean_code.lower() == str(entity.get('name', '')).lower().strip():
+                found_entity = entity
+                break
+        if found_entity:
+            self.play_sound('success')
+            self.close_barcode_scanner()
+            self.notify(f"Sélectionné : {found_entity['name']}", 'success')
+            self.select_entity_from_rv(found_entity)
+            self.target_scan_mode = None
+        else:
+            self.play_sound('error')
+            self.notify(f'Client introuvable : {code}', 'error')
 
     def update_scan_list_ui(self):
         from kivymd.uix.card import MDCard
