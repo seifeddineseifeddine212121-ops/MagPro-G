@@ -2154,9 +2154,11 @@ class StockApp(MDApp):
             self.ae_dialog = MDDialog(title='Hors Ligne', text='Modification impossible en mode hors ligne.\nVeuillez vous connecter au serveur.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.ae_dialog.dismiss())])
             self.ae_dialog.open()
             return
+        
         from kivy.core.clipboard import Clipboard
         is_edit = entity is not None
         title = 'Modifier Fiche' if is_edit else 'Ajouter Nouveau'
+        
         val_name = entity.get('name', '') if is_edit else ''
         val_phone = entity.get('phone', '') if is_edit else ''
         val_address = entity.get('address', '') if is_edit else ''
@@ -2167,8 +2169,10 @@ class StockApp(MDApp):
         val_nis = entity.get('nis', '') if is_edit else ''
         val_nai = entity.get('nai', '') if is_edit else ''
         val_gps = entity.get('gps_location', '') if is_edit else ''
+        
         old_lat = str(entity.get('lat', '')).strip() if is_edit else ''
         old_lon = str(entity.get('lon', '')).strip() if is_edit else ''
+
         raw_cat = str(entity.get('price_category', '')).strip() if is_edit else ''
         if raw_cat in ['Gros', 'جملة']:
             display_cat = 'Gros'
@@ -2176,46 +2180,56 @@ class StockApp(MDApp):
             display_cat = 'Demi-Gros'
         else:
             display_cat = 'Détail'
+
         scroll = MDScrollView(size_hint_y=None, height=dp(600))
         main_box = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15), padding=[dp(10), dp(10), dp(10), dp(20)])
+        
         card_info = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.99, 0.99, 0.99, 1))
         header_info = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
         header_info.add_widget(MDIcon(icon='account-box-outline', theme_text_color='Primary', font_size='22sp'))
         header_info.add_widget(MDLabel(text='Identité', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_info.add_widget(header_info)
         card_info.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        
         f_name = SmartTextField(text=val_name, hint_text='Nom Complet *', required=True, icon_right='account')
         f_activity = SmartTextField(text=val_activity, hint_text='Activité', icon_right='briefcase')
+        
         card_info.add_widget(f_name)
         card_info.add_widget(f_activity)
         main_box.add_widget(card_info)
+
         card_contact = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.96, 0.98, 1, 1))
         header_contact = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
         header_contact.add_widget(MDIcon(icon='card-account-phone-outline', theme_text_color='Primary', font_size='22sp'))
         header_contact.add_widget(MDLabel(text='Coordonnées & GPS', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_contact.add_widget(header_contact)
         card_contact.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        
         f_phone = SmartTextField(text=val_phone, hint_text='Téléphone', input_filter='int', icon_right='phone')
         f_address = SmartTextField(text=val_address, hint_text='Adresse', icon_right='map-marker')
         f_email = SmartTextField(text=val_email, hint_text='Email', icon_right='email')
+        
         gps_box = MDBoxLayout(orientation='horizontal', spacing=dp(5), adaptive_height=True)
         f_gps = SmartTextField(text=val_gps, hint_text='Lien GPS (Google Maps)', icon_right='google-maps', size_hint_x=0.85)
         btn_paste_gps = MDIconButton(icon='content-paste', theme_text_color='Custom', text_color=self.theme_cls.primary_color, pos_hint={'center_y': 0.5}, on_release=lambda x: setattr(f_gps, 'text', Clipboard.paste()))
+        
         gps_box.add_widget(f_gps)
         gps_box.add_widget(btn_paste_gps)
+        
         card_contact.add_widget(f_phone)
         card_contact.add_widget(f_address)
         card_contact.add_widget(gps_box)
         card_contact.add_widget(f_email)
         main_box.add_widget(card_contact)
-        f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True, icon_right='tag')
 
+        f_price_cat = MDTextField(text=display_cat, hint_text='Catégorie de Prix', readonly=True, icon_right='tag')
         def on_cat_touch(instance, touch):
             if instance.collide_point(*touch.pos):
                 self.show_price_cat_selector(instance)
                 return True
             return False
         f_price_cat.bind(on_touch_down=on_cat_touch)
+
         if self.current_entity_type_mgmt == 'account':
             card_comm = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(1, 0.98, 0.96, 1))
             header_comm = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
@@ -2225,22 +2239,24 @@ class StockApp(MDApp):
             card_comm.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
             card_comm.add_widget(f_price_cat)
             main_box.add_widget(card_comm)
+
         card_fisc = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True, md_bg_color=(0.95, 0.95, 0.95, 1))
         header_fisc = MDBoxLayout(orientation='horizontal', spacing=dp(10), adaptive_height=True)
         header_fisc.add_widget(MDIcon(icon='file-document-multiple-outline', theme_text_color='Primary', font_size='22sp'))
         header_fisc.add_widget(MDLabel(text='Information Fiscale', bold=True, theme_text_color='Primary', font_style='Subtitle1'))
         card_fisc.add_widget(header_fisc)
         card_fisc.add_widget(MDBoxLayout(size_hint_y=None, height=dp(1), md_bg_color=(0.9, 0.9, 0.9, 1)))
+        
         f_rc = SmartTextField(text=val_rc, hint_text='N° RC')
         f_nif = SmartTextField(text=val_nif, hint_text='N.I.F')
         f_nis = SmartTextField(text=val_nis, hint_text='N.I.S')
         f_nai = SmartTextField(text=val_nai, hint_text='N.A.I')
+        
         card_fisc.add_widget(f_rc)
         card_fisc.add_widget(f_nif)
         card_fisc.add_widget(f_nis)
         card_fisc.add_widget(f_nai)
         main_box.add_widget(card_fisc)
-        footer_box = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(10), 0, 0])
 
         def save(x):
             name_val = f_name.get_value().strip()
@@ -2248,6 +2264,7 @@ class StockApp(MDApp):
                 f_name.error = True
                 self.notify('Nom obligatoire', 'error')
                 return
+            
             cat_ar = 'تجزئة'
             if self.current_entity_type_mgmt == 'account':
                 selected_cat_fr = f_price_cat.text
@@ -2257,56 +2274,66 @@ class StockApp(MDApp):
                     cat_ar = 'نصف جملة'
                 else:
                     cat_ar = 'تجزئة'
+
             gps_txt = f_gps.get_value().strip()
+            
+            import re
+            url_match = re.search(r'(https?://[^\s]+)', gps_txt)
+            if url_match:
+                gps_txt = url_match.group(1)
+
             lat_val = ''
             lon_val = ''
+            
             if is_edit and gps_txt == val_gps and old_lat and old_lon:
                 lat_val = old_lat
                 lon_val = old_lon
-            elif gps_txt:
-                try:
-                    import re
-                    import urllib.request
-                    import ssl
-                    final_url = gps_txt
-                    if any((short in gps_txt for short in ['goo.gl', 'maps.app', 'bit.ly'])):
-                        try:
-                            ctx = ssl.create_default_context()
-                            ctx.check_hostname = False
-                            ctx.verify_mode = ssl.CERT_NONE
-                            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-                            req = urllib.request.Request(gps_txt, headers=headers)
-                            with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
-                                final_url = response.geturl()
-                        except Exception as e:
-                            print(f'URL Expansion Error: {e}')
-                    patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
-                    for pattern in patterns:
-                        match = re.search(pattern, final_url)
-                        if match:
-                            found_lat, found_lon = match.groups()
-                            if '!3d' in pattern:
-                                lat_val, lon_val = (found_lat, found_lon)
-                                break
-                            if '@' in pattern:
-                                if not lat_val:
-                                    lat_val, lon_val = (found_lat, found_lon)
-                            else:
-                                lat_val, lon_val = (found_lat, found_lon)
-                                break
-                except Exception as e:
-                    print(f'GPS Processing Error: {e}')
-            payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': gps_txt, 'lat': lat_val, 'lon': lon_val, 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
+
+            payload = {
+                'action': 'update' if is_edit else 'add', 
+                'type': self.current_entity_type_mgmt, 
+                'name': name_val, 
+                'phone': f_phone.get_value().strip(), 
+                'address': f_address.get_value().strip(), 
+                'gps_location': gps_txt,  # الرابط فقط
+                'lat': lat_val, 
+                'lon': lon_val, 
+                'activity': f_activity.get_value().strip(), 
+                'email': f_email.get_value().strip(), 
+                'price_category': cat_ar, 
+                'rc': f_rc.get_value().strip(), 
+                'nif': f_nif.get_value().strip(), 
+                'nis': f_nis.get_value().strip(), 
+                'nai': f_nai.get_value().strip(), 
+                'id': entity.get('id') if is_edit else None
+            }
+            
             if self.is_server_reachable:
-                UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
+                UrlRequest(
+                    f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', 
+                    req_body=json.dumps(payload), 
+                    req_headers={'Content-type': 'application/json'}, 
+                    method='POST', 
+                    on_success=lambda r, s: [
+                        self.ae_dialog.dismiss(), 
+                        self.notify('Succès (Traitement serveur...)', 'success'), 
+                        self.fetch_entities(self.current_entity_type_mgmt)
+                    ], 
+                    on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error')
+                )
             else:
                 self.notify('Impossible: Mode Hors Ligne', 'error')
+
+        footer_box = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(10), 0, 0])
         btn_save = MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=1, height=dp(50), elevation=2, on_release=save)
         btn_cancel = MDRaisedButton(text='ANNULER', md_bg_color=(0.9, 0.9, 0.9, 1), text_color=(0.3, 0.3, 0.3, 1), size_hint_x=1, height=dp(50), elevation=0, on_release=lambda x: self.ae_dialog.dismiss())
+        
         footer_box.add_widget(btn_save)
         footer_box.add_widget(btn_cancel)
         main_box.add_widget(footer_box)
+        
         scroll.add_widget(main_box)
+        
         self.ae_dialog = MDDialog(title=title, type='custom', content_cls=scroll, size_hint=(0.98, 0.96))
         self.ae_dialog.open()
 
