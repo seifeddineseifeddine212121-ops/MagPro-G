@@ -2167,6 +2167,8 @@ class StockApp(MDApp):
         val_nis = entity.get('nis', '') if is_edit else ''
         val_nai = entity.get('nai', '') if is_edit else ''
         val_gps = entity.get('gps_location', '') if is_edit else ''
+        old_lat = str(entity.get('lat', '')).strip() if is_edit else ''
+        old_lon = str(entity.get('lon', '')).strip() if is_edit else ''
         raw_cat = str(entity.get('price_category', '')).strip() if is_edit else ''
         if raw_cat in ['Gros', 'جملة']:
             display_cat = 'Gros'
@@ -2258,6 +2260,42 @@ class StockApp(MDApp):
             gps_txt = f_gps.get_value().strip()
             lat_val = ''
             lon_val = ''
+            if is_edit and gps_txt == val_gps and old_lat and old_lon:
+                lat_val = old_lat
+                lon_val = old_lon
+            elif gps_txt:
+                try:
+                    import re
+                    import urllib.request
+                    import ssl
+                    final_url = gps_txt
+                    if any((short in gps_txt for short in ['goo.gl', 'maps.app', 'bit.ly'])):
+                        try:
+                            ctx = ssl.create_default_context()
+                            ctx.check_hostname = False
+                            ctx.verify_mode = ssl.CERT_NONE
+                            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+                            req = urllib.request.Request(gps_txt, headers=headers)
+                            with urllib.request.urlopen(req, context=ctx, timeout=10) as response:
+                                final_url = response.geturl()
+                        except Exception as e:
+                            print(f'URL Expansion Error: {e}')
+                    patterns = ['!3d(-?\\d+\\.\\d+)!4d(-?\\d+\\.\\d+)', 'q=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'll=(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', 'search/(-?\\d+\\.\\d+),\\s*(-?\\d+\\.\\d+)', '@(-?\\d+\\.\\d+),(-?\\d+\\.\\d+)', '(-?\\d{1,2}\\.\\d+),\\s*(-?\\d{1,3}\\.\\d+)']
+                    for pattern in patterns:
+                        match = re.search(pattern, final_url)
+                        if match:
+                            found_lat, found_lon = match.groups()
+                            if '!3d' in pattern:
+                                lat_val, lon_val = (found_lat, found_lon)
+                                break
+                            if '@' in pattern:
+                                if not lat_val:
+                                    lat_val, lon_val = (found_lat, found_lon)
+                            else:
+                                lat_val, lon_val = (found_lat, found_lon)
+                                break
+                except Exception as e:
+                    print(f'GPS Processing Error: {e}')
             payload = {'action': 'update' if is_edit else 'add', 'type': self.current_entity_type_mgmt, 'name': name_val, 'phone': f_phone.get_value().strip(), 'address': f_address.get_value().strip(), 'gps_location': gps_txt, 'lat': lat_val, 'lon': lon_val, 'activity': f_activity.get_value().strip(), 'email': f_email.get_value().strip(), 'price_category': cat_ar, 'rc': f_rc.get_value().strip(), 'nif': f_nif.get_value().strip(), 'nis': f_nis.get_value().strip(), 'nai': f_nai.get_value().strip(), 'id': entity.get('id') if is_edit else None}
             if self.is_server_reachable:
                 UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/manage_entity', req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=lambda r, s: [self.ae_dialog.dismiss(), self.notify('Succès', 'success'), self.fetch_entities(self.current_entity_type_mgmt)], on_failure=lambda r, e: self.notify(f'Erreur: {e}', 'error'))
@@ -2635,7 +2673,6 @@ class StockApp(MDApp):
         self.buttons_container = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(15))
         self.main_dash_content.add_widget(self.buttons_container)
         self.stats_card_container = MDCard(orientation='vertical', size_hint_y=None, height=dp(280), padding=dp(10), radius=[10], elevation=2, md_bg_color=(0.97, 0.97, 0.97, 1))
-        self.main_dash_content.add_widget(self.stats_card_container)
         scroll.add_widget(self.main_dash_content)
         layout.add_widget(scroll)
         screen.add_widget(layout)
@@ -3810,7 +3847,7 @@ class StockApp(MDApp):
             main_box.add_widget(card_info)
             card_stock = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
             row_stock = MDBoxLayout(orientation='horizontal', spacing=dp(15), adaptive_height=True)
-            self.chk_unlimited = MDCheckbox(active=is_unlimited, size_hint=(None, None), size=(dp(40), dp(40)))
+            self.chk_unlimited = MDCheckbox(active=is_unlimited, size_hint=(None, None), size=(dp(40), dp(40)), disabled=has_movements)
             row_stock.add_widget(self.chk_unlimited)
             row_stock.add_widget(MDLabel(text='Illimité'))
             self.field_stock = MDTextField(text=val_stock, hint_text='Quantité', input_filter='float', size_hint_x=0.5)
@@ -3820,6 +3857,8 @@ class StockApp(MDApp):
             self.chk_unlimited.bind(active=on_chk)
             on_chk(None, is_unlimited)
             row_stock.add_widget(self.field_stock)
+            if has_movements:
+                card_stock.add_widget(MDLabel(text='* Quantité verrouillée (Produit utilisé)', theme_text_color='Error', font_style='Caption'))
             card_stock.add_widget(row_stock)
             main_box.add_widget(card_stock)
             card_price = MDCard(orientation='vertical', radius=[12], padding=dp(15), spacing=dp(10), elevation=1, adaptive_height=True)
@@ -3843,7 +3882,10 @@ class StockApp(MDApp):
                         return float(str(tf.text).replace(',', '.') or 0)
                     except:
                         return 0.0
-                stock_val = -1000000.0 if self.chk_unlimited.active else sf(self.field_stock)
+                if has_movements:
+                    stock_val = raw_stock
+                else:
+                    stock_val = -1000000.0 if self.chk_unlimited.active else sf(self.field_stock)
                 fam_val = self.btn_select_family.text
                 if fam_val == '(Aucune)' or fam_val == 'Tout':
                     fam_val = ''
