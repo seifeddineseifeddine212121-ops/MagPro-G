@@ -2501,8 +2501,11 @@ class StockApp(MDApp):
     def _auto_login_check(self, dt):
         if self.store.exists('credentials'):
             creds = self.store.get('credentials')
-            self.username_field.text = creds.get('username', '')
-            self.password_field.text = creds.get('password', '')
+            saved_user = creds.get('username', '')
+            saved_pass = creds.get('password', '')
+            self.username_field.text = saved_user
+            self.password_field.text = saved_pass
+            self.current_user_name = saved_user
             if self.username_field.text:
                 self.do_login(None)
 
@@ -2516,6 +2519,7 @@ class StockApp(MDApp):
         if res.get('status') == 'success':
             self.current_user_name = self.username_field.get_value()
             self.store.put('credentials', username=self.current_user_name, password=self.password_field.get_value())
+            self.store.put('last_login', username=self.current_user_name)
             self.is_offline_mode = False
             self.is_server_reachable = True
             self.sm.current = 'dashboard'
@@ -2543,6 +2547,7 @@ class StockApp(MDApp):
                     self.notify('Mode Hors Ligne', 'warning')
                     self.is_offline_mode = True
                     self.current_user_name = self.username_field.get_value()
+                    self.store.put('last_login', username=self.current_user_name)
                     self.sm.current = 'dashboard'
                     self.load_products_from_cache()
                     if self.cache_store.exists('clients'):
@@ -2597,6 +2602,12 @@ class StockApp(MDApp):
         icon_box.add_widget(MDIcon(icon='store', font_size='60sp', pos_hint={'center_x': 0.5, 'center_y': 0.5}, theme_text_color='Primary'))
         card.add_widget(icon_box)
         card.add_widget(MDLabel(text='MagPro Gestion de Stock', halign='center', font_style='H5', bold=True))
+        saved_user = 'ADMIN'
+        if self.store.exists('credentials'):
+            saved_user = self.store.get('credentials').get('username', 'ADMIN')
+        elif self.store.exists('last_login'):
+            saved_user = self.store.get('last_login').get('username', 'ADMIN')
+        self.current_user_name = saved_user
         self.username_field = SmartTextField(hint_text='Utilisateur', text=self.current_user_name, icon_right='account')
         self.password_field = SmartTextField(hint_text='Mot de passe', password=True, icon_right='key')
         card.add_widget(self.username_field)
