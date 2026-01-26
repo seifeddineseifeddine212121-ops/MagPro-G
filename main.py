@@ -2503,6 +2503,7 @@ class StockApp(MDApp):
             creds = self.store.get('credentials')
             saved_user = creds.get('username', '')
             saved_pass = creds.get('password', '')
+            self.user_sales_mode = creds.get('sales_mode', 'store')
             self.username_field.text = saved_user
             self.password_field.text = saved_pass
             self.current_user_name = saved_user
@@ -2518,7 +2519,8 @@ class StockApp(MDApp):
     def login_success(self, req, res):
         if res.get('status') == 'success':
             self.current_user_name = self.username_field.get_value()
-            self.store.put('credentials', username=self.current_user_name, password=self.password_field.get_value())
+            self.user_sales_mode = res.get('sales_mode', 'store')
+            self.store.put('credentials', username=self.current_user_name, password=self.password_field.get_value(), sales_mode=self.user_sales_mode)
             self.store.put('last_login', username=self.current_user_name)
             self.is_offline_mode = False
             self.is_server_reachable = True
@@ -2757,13 +2759,14 @@ class StockApp(MDApp):
             self.load_more_products(reset=True)
 
     def _build_cart_screen(self):
+        from kivymd.uix.button import MDFillRoundFlatIconButton, MDFillRoundFlatButton
         screen = MDScreen(name='cart')
         layout = MDBoxLayout(orientation='vertical')
         self.cart_toolbar = MDTopAppBar(title='Panier', left_action_items=[['arrow-left', lambda x: self.back_to_products()]])
         layout.add_widget(self.cart_toolbar)
         selectors = MDCard(orientation='horizontal', size_hint_y=None, height=dp(70), padding=dp(10), radius=0, md_bg_color=(0.95, 0.95, 0.95, 1))
         self.btn_ent_screen = MDFillRoundFlatButton(text='Client', size_hint_x=0.45, on_release=self.handle_entity_button_click)
-        self.btn_loc_screen = MDFillRoundFlatButton(text='Magasin', size_hint_x=0.45, on_release=self.toggle_location)
+        self.btn_loc_screen = MDFillRoundFlatIconButton(text='Magasin', icon='store', size_hint_x=0.45, on_release=self.toggle_location)
         selectors.add_widget(self.btn_ent_screen)
         selectors.add_widget(MDBoxLayout(size_hint_x=0.1))
         selectors.add_widget(self.btn_loc_screen)
@@ -4146,6 +4149,9 @@ class StockApp(MDApp):
                 self.filter_history_list(specific_date=target_date)
 
     def toggle_location(self, x=None):
+        if getattr(self, 'user_sales_mode', 'store') == 'truck':
+            self.notify('Mode VAN : Emplacement fixe', 'info')
+            return
         self.selected_location = 'warehouse' if self.selected_location == 'store' else 'store'
         self.update_location_display()
         if self.current_mode == 'transfer' and hasattr(self, 'btn_ent_screen'):
@@ -4155,11 +4161,18 @@ class StockApp(MDApp):
 
     def update_location_display(self):
         if hasattr(self, 'btn_loc_screen'):
+            if getattr(self, 'user_sales_mode', 'store') == 'truck':
+                self.btn_loc_screen.text = 'VAN'
+                self.btn_loc_screen.icon = 'truck'
+                self.btn_loc_screen.md_bg_color = (0.5, 0.3, 0.1, 1)
+                return
             if self.selected_location == 'store':
-                self.btn_loc_screen.text = 'Magasin'
+                self.btn_loc_screen.text = 'MAGASIN'
+                self.btn_loc_screen.icon = 'store'
                 self.btn_loc_screen.md_bg_color = self.theme_cls.primary_color
             else:
-                self.btn_loc_screen.text = 'Dépôt'
+                self.btn_loc_screen.text = 'DEPOT'
+                self.btn_loc_screen.icon = 'warehouse'
                 self.btn_loc_screen.md_bg_color = (0.8, 0.4, 0, 1)
 
     def show_entity_selection_dialog(self, x, next_action=None):
