@@ -713,6 +713,8 @@ class StockApp(MDApp):
                 if str(p.get('name', '')).lower().startswith('autre article'):
                     if self.current_mode not in allowed_autre_modes:
                         continue
+                    if getattr(self, 'user_sales_mode', 'store') == 'truck':
+                        continue
                 s_store = float(p.get('stock', 0) or 0)
                 s_wh = float(p.get('stock_warehouse', 0) or 0)
                 total_stock = s_store + s_wh
@@ -809,6 +811,8 @@ class StockApp(MDApp):
                 prod_name_lower = str(p.get('name', '')).lower()
                 if prod_name_lower.startswith('autre article'):
                     if self.current_mode not in allowed_autre_modes:
+                        continue
+                    if getattr(self, 'user_sales_mode', 'store') == 'truck':
                         continue
                 s_store = float(p.get('stock', 0) or 0)
                 s_wh = float(p.get('stock_warehouse', 0) or 0)
@@ -1667,18 +1671,22 @@ class StockApp(MDApp):
             self.btn_ent_hist_yesterday.md_bg_color = active_color if day_offset == 1 else inactive_color
             self.btn_ent_hist_date.md_bg_color = inactive_color
             self.btn_ent_hist_date.text = 'CALENDRIER'
-        self.rv_entity_history.data = [{'raw_text': 'Chargement...', 'raw_sec': '', 'amount_text': '', 'icon': 'timer-sand', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
+        self.rv_entity_history.data = [{'type_str': 'Chargement...', 'ref_str': '', 'entity_str': 'Veuillez patienter', 'date_str': '', 'amount_text': '', 'icon': 'timer-sand', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
 
         def on_history_fetched(req, result):
             rv_data = []
             if not result:
-                rv_data.append({'raw_text': 'Aucune opération trouvée.', 'raw_sec': '', 'amount_text': '', 'icon': 'information-outline', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None})
+                rv_data.append({'type_str': 'Info', 'ref_str': '', 'entity_str': 'Aucune opération trouvée.', 'date_str': '', 'amount_text': '', 'icon': 'information-outline', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None})
                 self.rv_entity_history.data = rv_data
                 return
             target_name = self.history_target_entity['name'].lower()
             main_doc_prefixes = ['BV', 'BA', 'FC', 'FF', 'RC', 'RF', 'FP', 'DP', 'BI', 'TR']
             manual_keywords = ['versement', 'règlement', 'reglement', 'crédit', 'credit', 'dette', 'سداد', 'دفعة', 'إيداع', 'rendu', 'versé', 'excédent', 'excedent', 'فائض']
             for item in result:
+                if self.is_seller_mode:
+                    item_user = str(item.get('user', '')).strip()
+                    if item_user != self.current_user_name:
+                        continue
                 server_entity_name = str(item.get('entity', '')).lower()
                 if target_name not in server_entity_name:
                     continue
@@ -1740,20 +1748,20 @@ class StockApp(MDApp):
                 elif prefix == 'RC':
                     icon = 'keyboard-return'
                     color = (0.8, 0, 0, 1)
-                final_sec = f"{time_str} • {item.get('user', '')}"
-                rv_data.append({'raw_text': final_desc, 'raw_sec': final_sec, 'amount_text': amount_text, 'icon': icon, 'icon_color': color, 'bg_color': bg_color, 'is_local': False, 'raw_data': item, 'key': ''})
+                final_user_time = f"{time_str} • {item.get('user', '')}"
+                rv_data.append({'type_str': 'Opération', 'ref_str': final_user_time, 'entity_str': final_desc, 'date_str': '', 'amount_text': amount_text, 'icon': icon, 'icon_color': color, 'bg_color': bg_color, 'is_local': False, 'raw_data': item, 'key': ''})
             if not rv_data:
-                rv_data.append({'raw_text': 'Aucune transaction (filtrée).', 'raw_sec': '', 'amount_text': '', 'icon': 'filter-outline', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None})
+                rv_data.append({'type_str': 'Info', 'ref_str': '', 'entity_str': 'Aucune transaction trouvée (Filtre).', 'date_str': '', 'amount_text': '', 'icon': 'filter-outline', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None})
             self.rv_entity_history.data = rv_data
             self.rv_entity_history.refresh_from_data()
 
         def on_fail(req, err):
-            self.rv_entity_history.data = [{'raw_text': 'Erreur de connexion serveur.', 'raw_sec': str(err), 'amount_text': '', 'icon': 'wifi-off', 'icon_color': [0.8, 0, 0, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
+            self.rv_entity_history.data = [{'type_str': 'Erreur', 'ref_str': '', 'entity_str': 'Erreur de connexion serveur.', 'date_str': '', 'amount_text': '', 'icon': 'wifi-off', 'icon_color': [0.8, 0, 0, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
         if self.is_server_reachable:
             url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/history?date={target_date}'
             UrlRequest(url, on_success=on_history_fetched, on_failure=on_fail, on_error=on_fail)
         else:
-            self.rv_entity_history.data = [{'raw_text': 'Mode Hors Ligne', 'raw_sec': "Impossible de voir l'historique", 'amount_text': '', 'icon': 'wifi-off', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
+            self.rv_entity_history.data = [{'type_str': 'Hors Ligne', 'ref_str': '', 'entity_str': "Impossible de voir l'historique", 'date_str': '', 'amount_text': '', 'icon': 'wifi-off', 'icon_color': [0.5, 0.5, 0.5, 1], 'bg_color': [1, 1, 1, 1], 'is_local': False, 'raw_data': None}]
 
     def fetch_and_edit_transaction(self, item_data):
         if self.is_seller_mode:
@@ -2413,14 +2421,16 @@ class StockApp(MDApp):
                 print(f'[INFO] Maps Enabled on Server: {self.maps_enabled}')
 
     def _on_heartbeat_success(self):
+        was_offline = not self.is_server_reachable
         self.is_server_reachable = True
+        self.silent_user_check()
         unsynced_orders = [k for k in self.offline_store.keys() if not self.offline_store.get(k).get('synced', False)]
         if unsynced_orders:
             self.try_sync_offline_data()
         self.sync_gps_data()
         if self.is_offline_mode:
             self.is_offline_mode = False
-            self.notify(f"Connexion OK ({('Local' if self.active_server_ip == self.local_server_ip else 'Ext')})", 'success')
+            self.notify(f"Connexion Rétablie ({('Local' if self.active_server_ip == self.local_server_ip else 'Ext')})", 'success')
             self.fetch_products()
             self.fetch_categories()
             self.fetch_entities('account')
@@ -2432,6 +2442,34 @@ class StockApp(MDApp):
             self._reset_notification_state(0)
         if not self.store.exists('print_header'):
             self.fetch_store_info()
+
+    def silent_user_check(self):
+        if not self.store.exists('credentials'):
+            return
+        creds = self.store.get('credentials')
+        user = creds.get('username')
+        pwd = creds.get('password')
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/login'
+        body = json.dumps({'username': user, 'password': pwd})
+
+        def on_silent_success(req, res):
+            if res.get('status') == 'success':
+                server_sales_mode = res.get('sales_mode', 'store')
+                if getattr(self, 'user_sales_mode', '') != server_sales_mode:
+                    self.user_sales_mode = server_sales_mode
+                    self.store.put('credentials', username=user, password=pwd, sales_mode=server_sales_mode)
+                    self.update_location_display()
+                    self.notify(f'Mode Stock mis à jour: {server_sales_mode}', 'info')
+                role = str(res.get('role', '')).lower()
+                seller_roles = ['cashier', 'baye', 'vendeur', 'seller', 'بائع']
+                should_be_seller = role in seller_roles
+                if self.is_seller_mode != should_be_seller:
+                    self.is_seller_mode = should_be_seller
+                    self.store.put('config', ip=self.local_server_ip, ext_ip=self.external_server_ip, seller_mode=self.is_seller_mode)
+                    self.update_dashboard_layout()
+                    msg = 'Mode Vendeur Activé (Sync)' if should_be_seller else 'Mode Admin Activé (Sync)'
+                    self.notify(msg, 'info')
+        UrlRequest(url, req_body=body, req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_silent_success)
 
     def _on_heartbeat_fail_final(self, req, err):
         if self.is_server_reachable:
@@ -2498,7 +2536,29 @@ class StockApp(MDApp):
             self.status_bar_label.text = 'Prêt'
             self.status_bar_bg.md_bg_color = (0.15, 0.5, 0.15, 1)
 
+    def update_location_display(self):
+        if hasattr(self, 'btn_loc_screen'):
+            mode = getattr(self, 'user_sales_mode', 'store')
+            if not mode:
+                mode = 'store'
+            if mode == 'truck':
+                self.btn_loc_screen.text = 'VAN'
+                self.btn_loc_screen.icon = 'truck'
+                self.btn_loc_screen.md_bg_color = (0.6, 0.4, 0.2, 1)
+                self.selected_location = 'store'
+            elif self.selected_location == 'store':
+                self.btn_loc_screen.text = 'MAGASIN'
+                self.btn_loc_screen.icon = 'store'
+                self.btn_loc_screen.md_bg_color = self.theme_cls.primary_color
+            else:
+                self.btn_loc_screen.text = 'DEPOT'
+                self.btn_loc_screen.icon = 'warehouse'
+                self.btn_loc_screen.md_bg_color = (0.8, 0.4, 0, 1)
+
     def _auto_login_check(self, dt):
+        if self.store.exists('config'):
+            config = self.store.get('config')
+            self.is_seller_mode = config.get('seller_mode', False)
         if self.store.exists('credentials'):
             creds = self.store.get('credentials')
             saved_user = creds.get('username', '')
@@ -2507,6 +2567,8 @@ class StockApp(MDApp):
             self.username_field.text = saved_user
             self.password_field.text = saved_pass
             self.current_user_name = saved_user
+            self.update_dashboard_layout()
+            self.update_location_display()
             if self.username_field.text:
                 self.do_login(None)
 
@@ -2519,8 +2581,17 @@ class StockApp(MDApp):
     def login_success(self, req, res):
         if res.get('status') == 'success':
             self.current_user_name = self.username_field.get_value()
-            self.user_sales_mode = res.get('sales_mode', 'store')
+            server_sales_mode = res.get('sales_mode', 'store')
+            self.user_sales_mode = server_sales_mode
+            role = str(res.get('role', '')).lower()
+            seller_roles = ['cashier', 'baye', 'vendeur', 'seller', 'بائع']
+            if role in seller_roles:
+                self.is_seller_mode = True
+                self.notify(f'Mode Vendeur Activé', 'info')
+            else:
+                self.is_seller_mode = False
             self.store.put('credentials', username=self.current_user_name, password=self.password_field.get_value(), sales_mode=self.user_sales_mode)
+            self.store.put('config', ip=self.local_server_ip, ext_ip=self.external_server_ip, seller_mode=self.is_seller_mode)
             self.store.put('last_login', username=self.current_user_name)
             self.is_offline_mode = False
             self.is_server_reachable = True
@@ -2530,6 +2601,8 @@ class StockApp(MDApp):
             self.fetch_entities('supplier')
             self.fetch_store_info()
             self.check_and_load_stats()
+            self.update_dashboard_layout()
+            self.update_location_display()
             if platform == 'android':
                 Clock.schedule_once(lambda dt: self.start_gps_service(), 1)
         else:
@@ -3116,6 +3189,19 @@ class StockApp(MDApp):
                 new_q = float(q_text)
                 if new_q <= 0:
                     raise ValueError
+                if getattr(self, 'user_sales_mode', 'store') == 'truck' and self.current_mode in ['sale', 'invoice_sale', 'proforma']:
+                    original_prod = None
+                    if hasattr(self, 'all_products_raw'):
+                        for p in self.all_products_raw:
+                            if str(p['id']) == str(item['id']):
+                                original_prod = p
+                                break
+                    if original_prod:
+                        available_stock = float(original_prod.get('stock', 0) or 0)
+                        if available_stock > -900000:
+                            if new_q > available_stock:
+                                self.notify(f'Stock VAN insuffisant ! Disponible : {int(available_stock)}', 'error')
+                                return
                 item['qty'] = new_q
                 if self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']:
                     specials = item.get('special_prices', [])
@@ -3154,7 +3240,8 @@ class StockApp(MDApp):
                 self.refresh_cart_screen_items()
                 self.update_cart_button()
                 self.edit_dialog.dismiss()
-            except:
+            except Exception as e:
+                print(e)
                 self.notify('Valeurs invalides', 'error')
         self.btn_save_edit.bind(on_release=save_changes)
         buttons_box.add_widget(btn_cancel)
@@ -3649,16 +3736,28 @@ class StockApp(MDApp):
 
         def perform_add(x):
             try:
+                q_text = self.qty_field.text
+                if not q_text:
+                    q_text = '1'
+                req_qty = float(q_text)
+                current_sales_mode = getattr(self, 'user_sales_mode', 'store')
+                if current_sales_mode == 'truck' and self.current_mode in ['sale', 'invoice_sale', 'proforma']:
+                    available_stock = float(product.get('stock', 0) or 0)
+                    if available_stock > -900000:
+                        in_cart_qty = 0
+                        for item in self.cart:
+                            if str(item['id']) == str(product['id']):
+                                in_cart_qty += float(item.get('qty', 0))
+                        if in_cart_qty + req_qty > available_stock:
+                            self.notify(f'Stock VAN insuffisant ! Disponible : {int(available_stock)}', 'error')
+                            return
                 if not is_transfer and hasattr(self, 'price_field'):
                     p_text = self.price_field.text
                     if not p_text:
                         p_text = '0'
                     p_val = float(p_text)
                     temp_product['price'] = p_val
-                q_text = self.qty_field.text
-                if not q_text:
-                    q_text = '1'
-                self.qty_field.text = q_text
+                self.qty_field.text = str(req_qty)
                 self.add_to_cart(temp_product)
                 if self.dialog:
                     self.dialog.dismiss()
@@ -4149,7 +4248,8 @@ class StockApp(MDApp):
                 self.filter_history_list(specific_date=target_date)
 
     def toggle_location(self, x=None):
-        if getattr(self, 'user_sales_mode', 'store') == 'truck':
+        mode = getattr(self, 'user_sales_mode', 'store')
+        if mode == 'truck':
             self.notify('Mode VAN : Emplacement fixe', 'info')
             return
         self.selected_location = 'warehouse' if self.selected_location == 'store' else 'store'
@@ -4161,12 +4261,17 @@ class StockApp(MDApp):
 
     def update_location_display(self):
         if hasattr(self, 'btn_loc_screen'):
-            if getattr(self, 'user_sales_mode', 'store') == 'truck':
+            mode = getattr(self, 'user_sales_mode', None)
+            if not mode and self.store.exists('credentials'):
+                mode = self.store.get('credentials').get('sales_mode', 'store')
+            if not mode:
+                mode = 'store'
+            if mode == 'truck':
                 self.btn_loc_screen.text = 'VAN'
                 self.btn_loc_screen.icon = 'truck'
-                self.btn_loc_screen.md_bg_color = (0.5, 0.3, 0.1, 1)
-                return
-            if self.selected_location == 'store':
+                self.btn_loc_screen.md_bg_color = (0.6, 0.4, 0.2, 1)
+                self.selected_location = 'store'
+            elif self.selected_location == 'store':
                 self.btn_loc_screen.text = 'MAGASIN'
                 self.btn_loc_screen.icon = 'store'
                 self.btn_loc_screen.md_bg_color = self.theme_cls.primary_color
@@ -4705,6 +4810,11 @@ class StockApp(MDApp):
                 item_store = self.offline_store.get(k)
                 if item_store.get('synced', False):
                     continue
+                data = item_store.get('order_data', {})
+                if self.is_seller_mode:
+                    local_user = str(data.get('user_name', '')).strip()
+                    if local_user != self.current_user_name:
+                        continue
                 parts = k.split('_')
                 if parts[0].isdigit():
                     ts_val = int(parts[0])
@@ -4830,14 +4940,13 @@ class StockApp(MDApp):
         main_doc_prefixes = ['BV', 'BA', 'RC', 'RF', 'TR', 'FP', 'DP', 'BI', 'FC', 'FF']
         default_names = ['زبون افتراضي', 'مورد افتراضي', 'DEFAULT_CUSTOMER', 'DEFAULT_SUPPLIER', 'Comptoir', 'Fournisseur']
         for item in result:
+            if self.is_seller_mode:
+                item_user = str(item.get('user', '')).strip()
+                if item_user != self.current_user_name:
+                    continue
             desc = str(item.get('desc', '')).strip()
             prefix = desc[:2].upper() if len(desc) >= 2 else ''
             desc_lower = desc.lower()
-            if self.is_seller_mode:
-                is_allowed_doc = prefix in ['BV', 'RC']
-                is_client_money = any((k in desc_lower for k in ['versement', 'client', 'تحصيل', 'دفعة', 'encaissement']))
-                if not (is_allowed_doc or is_client_money or prefix not in main_doc_prefixes):
-                    continue
             is_transfer = item.get('is_transfer', False)
             amount = float(item.get('amount', 0))
             raw_entity_name = str(item.get('entity', ''))
@@ -5800,6 +5909,18 @@ class StockApp(MDApp):
 
     def add_scanned_item_to_cart(self, product):
         try:
+            current_sales_mode = getattr(self, 'user_sales_mode', 'store')
+            if current_sales_mode == 'truck' and self.current_mode in ['sale', 'invoice_sale', 'proforma']:
+                available_stock = float(product.get('stock', 0) or 0)
+                if available_stock > -900000:
+                    in_cart_qty = 0
+                    for item in self.cart:
+                        if str(item['id']) == str(product['id']):
+                            in_cart_qty += float(item.get('qty', 0))
+                    if in_cart_qty + 1 > available_stock:
+                        self.play_sound('error')
+                        self.notify(f"Stock VAN insuffisant : {product.get('name')}", 'error')
+                        return
             sales_modes = ['sale', 'return_sale', 'invoice_sale', 'proforma']
             is_sales_mode = self.current_mode in sales_modes
             final_price = 0.0
