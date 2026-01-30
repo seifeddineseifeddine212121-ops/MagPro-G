@@ -4351,6 +4351,9 @@ class StockApp(MDApp):
         self.temp_total_ht = total_ht
         self.temp_total_tva = total_tva
         base_ttc = self._round_num(total_ht + total_tva)
+        if self.current_mode in ['return_sale', 'return_purchase']:
+            self.process_transaction(paid_amount=0.0, total_amount=base_ttc, method='')
+            return
         is_zero_pay_mode = self.current_mode in ['transfer', 'proforma', 'order_purchase']
         server_default_names = ['COMPTOIR', 'Comptoir', 'زبون افتراضي', 'مورد افتراضي', 'DEFAULT_CUSTOMER', 'DEFAULT_SUPPLIER']
         ent_name = str(self.selected_entity.get('name', '')).strip() if self.selected_entity else ''
@@ -4687,6 +4690,24 @@ class StockApp(MDApp):
                     self.save_to_history(excess_data, synced=False)
                     self.update_local_entity_balance(excess_data['entity_id'], excess_data['amount'])
                 try:
+                    doc_type_local = data.get('doc_type', 'BV')
+                    if doc_type_local not in ['TR', 'FP', 'DP', 'BI'] and data.get('entity_id'):
+                        is_invoice_doc = doc_type_local in ['FC', 'FF']
+                        ht, tva = self.calculate_cart_totals(data.get('items', []), is_invoice_doc)
+                        total_amount_loc = self._round_num(ht + tva)
+                        if is_invoice_doc:
+                            p_info = data.get('payment_info', {})
+                            total_amount_loc = self._round_num(total_amount_loc + float(p_info.get('timbre', 0)))
+                        balance_sign = 1
+                        if doc_type_local in ['RC', 'RF']:
+                            balance_sign = -1
+                        payment_info_loc = data.get('payment_info', {})
+                        paid_amount_loc = float(payment_info_loc.get('amount', 0))
+                        net_change = self._round_num(total_amount_loc * balance_sign - paid_amount_loc)
+                        self.update_local_entity_balance(data['entity_id'], net_change)
+                except Exception as e:
+                    print(f'Error calculating offline balance update: {e}')
+                try:
                     printable_modes = ['sale', 'purchase', 'return_sale', 'return_purchase', 'transfer']
                     if self.current_mode in printable_modes:
                         if self.store.exists('printer_config'):
@@ -4785,6 +4806,10 @@ class StockApp(MDApp):
         self.filter_history_list(day_offset=0)
 
     def filter_history_list(self, day_offset=None, specific_date=None):
+        if not hasattr(self, 'btn_hist_today') or not self.btn_hist_today:
+            if specific_date:
+                self.history_view_date = specific_date
+            return
         inactive_color = (0.5, 0.5, 0.5, 1)
         active_color = self.theme_cls.primary_color
         target_date = None
@@ -4864,7 +4889,17 @@ class StockApp(MDApp):
             icon_color = (0, 0.5, 0.8, 1)
             bg_col = (1, 1, 1, 1)
             amount_text = f'{amount:.2f} DA'
-            if doc_type == 'TR':
+            if doc_type == 'RC':
+                icon_name = 'keyboard-return'
+                bg_col = (1, 0.9, 0.9, 1)
+                icon_color = (0.8, 0, 0, 1)
+                full_doc_name = 'Retour Client'
+            elif doc_type == 'RF':
+                icon_name = 'undo'
+                bg_col = (0.9, 1, 1, 1)
+                icon_color = (0, 0.6, 0.6, 1)
+                full_doc_name = 'Retour Fournisseur'
+            elif doc_type == 'TR':
                 full_doc_name = 'Transfert Stock'
                 icon_name = 'compare-horizontal'
                 bg_col = (0.95, 0.9, 1, 1)
@@ -4895,15 +4930,6 @@ class StockApp(MDApp):
                 icon_name = 'truck'
                 full_doc_name = "Bon d'Achat"
                 icon_color = (1, 0.6, 0, 1)
-            elif doc_type == 'RC':
-                icon_name = 'keyboard-return'
-                bg_col = (1, 0.95, 0.95, 1)
-                icon_color = (0.8, 0, 0, 1)
-                full_doc_name = 'Retour Client'
-            elif doc_type == 'RF':
-                icon_name = 'undo'
-                icon_color = (0, 0.6, 0.6, 1)
-                full_doc_name = 'Retour Fournisseur'
             elif doc_type == 'FC':
                 icon_name = 'file-document'
                 full_doc_name = 'Facture Vente'
@@ -4912,23 +4938,12 @@ class StockApp(MDApp):
                 icon_name = 'file-document-edit'
                 full_doc_name = 'Facture Achat'
                 icon_color = (1, 0.4, 0, 1)
-            elif doc_type == 'FP':
-                icon_name = 'file-document-outline'
-                full_doc_name = 'Proforma'
-                icon_color = (0.5, 0, 0.5, 1)
-            elif doc_type == 'DP':
-                icon_name = 'clipboard-list'
-                full_doc_name = 'Bon de Commande'
-                icon_color = (0, 0.5, 0.5, 1)
-            elif doc_type == 'BI':
-                icon_name = 'database-plus'
-                full_doc_name = 'Bon Initial'
             ref_str = f'Local • {self.current_user_name}'
             self.history_rv_data.append({'type_str': full_doc_name, 'ref_str': ref_str, 'entity_str': entity_name, 'date_str': dt_str, 'amount_text': amount_text, 'icon': icon_name, 'icon_color': icon_color, 'bg_color': bg_col, 'is_local': True, 'key': k, 'raw_data': None})
         self.rv_history.data = self.history_rv_data
         if self.is_server_reachable:
             url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/history?date={target_date}'
-            UrlRequest(url, on_success=self.on_history_server_loaded)
+            UrlRequest(url, on_success=self.on_history_server_loaded, on_failure=self.on_history_fail)
         elif not self.history_rv_data:
             self.rv_history.data = []
 
