@@ -35,6 +35,7 @@ from kivy.properties import StringProperty, NumericProperty, ObjectProperty, Lis
 from kivy.storage.jsonstore import JsonStore
 from kivy.uix.behaviors import ButtonBehavior as KivyButtonBehavior
 from kivy.uix.camera import Camera
+from kivy.uix.image import AsyncImage
 from kivy.uix.modalview import ModalView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
@@ -697,6 +698,7 @@ class StockApp(MDApp):
         rv_data = []
         is_sale = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
         is_transfer = self.current_mode == 'transfer'
+        is_request = self.current_mode == 'request_stock'
         allowed_autre_modes = ['sale', 'invoice_sale', 'proforma', 'order_purchase', 'return_sale']
 
         def fmt_qty(val):
@@ -715,11 +717,14 @@ class StockApp(MDApp):
                         continue
                     if getattr(self, 'user_sales_mode', 'store') == 'truck':
                         continue
-                s_store = float(p.get('stock', 0) or 0)
+                s_context = float(p.get('stock', 0) or 0)
+                s_store_real = float(p.get('real_stock_store', 0) or 0)
+                if 'real_stock_store' not in p:
+                    s_store_real = float(p.get('stock_store', s_context))
                 s_wh = float(p.get('stock_warehouse', 0) or 0)
-                total_stock = s_store + s_wh
+                total_stock = s_context + s_wh
                 if is_transfer:
-                    if s_store <= -900000 or s_wh <= -900000 or total_stock < 0:
+                    if s_context <= -900000 or s_wh <= -900000 or total_stock < 0:
                         continue
                 raw_cat = str(p.get('category', ''))
                 if raw_cat.lower() == 'none':
@@ -728,13 +733,27 @@ class StockApp(MDApp):
                     category = self.fix_text(raw_cat)
                 image_path_raw = p.get('image', '')
                 final_image_source = self.get_cached_image_url(image_path_raw)
-                if is_transfer:
-                    price_fmt = f'Qnt Tot: {fmt_qty(total_stock)}'
+                price_fmt = ''
+                stock_text = ''
+                p_color = [0, 0, 0, 1]
+                if is_request:
+                    price_fmt = f'Qté: {fmt_qty(s_store_real)}'
+                    stock_text = ''
+                    p_color = [0, 0.4, 0.7, 1]
+                elif is_transfer:
+                    price_fmt = f'Total: {fmt_qty(total_stock)}'
+                    stock_text = f'Mag: {fmt_qty(s_context)} | Dép: {fmt_qty(s_wh)}'
                     p_color = [0.2, 0.2, 0.8, 1]
                 elif is_sale:
                     price = float(p.get('price', 0) or 0)
                     price_fmt = f'{price:.2f} DA'
                     p_color = [0, 0.6, 0, 1] if not p.get('has_promo') else [0.5, 0, 0.5, 1]
+                    if s_context <= -900000 or s_wh <= -900000:
+                        stock_text = 'Illimité'
+                    elif s_wh != 0:
+                        stock_text = f'Qté: {fmt_qty(s_context)} | Dép: {fmt_qty(s_wh)}'
+                    else:
+                        stock_text = f'Qté: {fmt_qty(s_context)}'
                 else:
                     p_price = p.get('purchase_price')
                     if p_price is None:
@@ -742,17 +761,9 @@ class StockApp(MDApp):
                     price = float(p_price or 0)
                     price_fmt = f'{price:.2f} DA'
                     p_color = [0.9, 0.5, 0, 1]
-                stock_text = ''
-                if is_transfer:
-                    stock_text = f'Mag: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
-                elif s_store <= -900000 or s_wh <= -900000:
-                    stock_text = 'Illimité'
-                elif s_wh != 0:
-                    stock_text = f'Qté: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
-                else:
-                    stock_text = f'Qté: {fmt_qty(s_store)}'
-                icon_name = 'package-variant' if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else 'package-variant-closed'
-                icon_color = [0, 0.6, 0, 1] if total_stock > 0 or s_store <= -900000 else [0.8, 0, 0, 1]
+                    stock_text = f'Qté: {fmt_qty(s_context)}'
+                icon_name = 'package-variant' if total_stock > 0 or s_context <= -900000 or s_wh <= -900000 else 'package-variant-closed'
+                icon_color = [0, 0.6, 0, 1] if total_stock > 0 or s_context <= -900000 else [0.8, 0, 0, 1]
                 rv_data.append({'text_name': name, 'text_category': category, 'text_price': price_fmt, 'text_stock': stock_text, 'icon_name': icon_name, 'icon_color': icon_color, 'price_color': p_color, 'image_url': final_image_source, 'raw_data': p})
             except Exception as e:
                 print(f'Error processing item: {e}')
@@ -796,6 +807,7 @@ class StockApp(MDApp):
         rv_data = []
         is_sale = self.current_mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
         is_transfer = self.current_mode == 'transfer'
+        is_request = self.current_mode == 'request_stock'
         allowed_autre_modes = ['sale', 'invoice_sale', 'proforma', 'order_purchase', 'return_sale']
 
         def fmt_qty(val):
@@ -814,19 +826,26 @@ class StockApp(MDApp):
                         continue
                     if getattr(self, 'user_sales_mode', 'store') == 'truck':
                         continue
-                s_store = float(p.get('stock', 0) or 0)
+                s_context = float(p.get('stock', 0) or 0)
+                s_store_real = float(p.get('real_stock_store', 0) or 0)
+                if 'real_stock_store' not in p:
+                    s_store_real = float(p.get('stock_store', s_context))
                 s_wh = float(p.get('stock_warehouse', 0) or 0)
-                total_stock = s_store + s_wh
+                total_stock = s_context + s_wh
                 if is_transfer:
-                    if s_store <= -900000 or s_wh <= -900000 or total_stock < 0:
+                    if s_context <= -900000 or s_wh <= -900000 or total_stock < 0:
                         continue
                 price_fmt = ''
-                price_color = [0, 0, 0, 1]
                 stock_text = ''
-                if is_transfer:
-                    price_fmt = f'Qnt Tot: {fmt_qty(total_stock)}'
+                price_color = [0, 0, 0, 1]
+                if is_request:
+                    price_fmt = f'Qté: {fmt_qty(s_store_real)}'
+                    stock_text = ''
+                    price_color = [0, 0.4, 0.7, 1]
+                elif is_transfer:
+                    price_fmt = f'Total: {fmt_qty(total_stock)}'
+                    stock_text = f'Mag: {fmt_qty(s_context)} | Dép: {fmt_qty(s_wh)}'
                     price_color = [0.2, 0.2, 0.8, 1]
-                    stock_text = f'Mag: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
                 else:
                     if is_sale:
                         price = float(p.get('price', 0) or 0)
@@ -839,14 +858,14 @@ class StockApp(MDApp):
                         price = float(p_price or 0)
                         price_fmt = f'{price:.2f} DA'
                         price_color = [0.9, 0.5, 0, 1]
-                    if s_store <= -900000 or s_wh <= -900000:
+                    if s_context <= -900000 or s_wh <= -900000:
                         stock_text = 'Illimité'
                     elif s_wh != 0:
-                        stock_text = f'Qté: {fmt_qty(s_store)} | Dép: {fmt_qty(s_wh)}'
+                        stock_text = f'Qté: {fmt_qty(s_context)} | Dép: {fmt_qty(s_wh)}'
                     else:
-                        stock_text = f'Qté: {fmt_qty(s_store)}'
-                icon = 'package-variant' if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else 'package-variant-closed'
-                icon_col = [0, 0.6, 0, 1] if total_stock > 0 or s_store <= -900000 or s_wh <= -900000 else [0.8, 0, 0, 1]
+                        stock_text = f'Qté: {fmt_qty(s_context)}'
+                icon = 'package-variant' if total_stock > 0 or s_context <= -900000 or s_wh <= -900000 else 'package-variant-closed'
+                icon_col = [0, 0.6, 0, 1] if total_stock > 0 or s_context <= -900000 or s_wh <= -900000 else [0.8, 0, 0, 1]
                 raw_name = str(p.get('name', 'Inconnu'))
                 display_name = self.fix_text(raw_name)
                 image_path_raw = p.get('image', '')
@@ -1919,6 +1938,57 @@ class StockApp(MDApp):
             self.submit_simple_payment_offline(data)
             release_lock_and_finish()
 
+    def validate_cart_action(self, instance):
+        if self.current_mode == 'request_stock':
+            self.submit_stock_request()
+        else:
+            self.open_payment_dialog(instance)
+
+    def submit_stock_request(self, instance=None):
+        if not self.cart:
+            self.notify('Le panier est vide !', 'error')
+            return
+        self.notify('Traitement de la demande...', 'info')
+        items_payload = []
+        for item in self.cart:
+            items_payload.append({'id': item['id'], 'qty': float(item['qty']), 'name': item['name']})
+        creation_timestamp = str(datetime.now())
+        payload = {'user_name': self.current_user_name, 'items': items_payload, 'notes': 'Demande mobile', 'doc_type': 'DS', 'timestamp': creation_timestamp}
+
+        def save_offline():
+            try:
+                timestamp_sec = int(time.time())
+                unique_id = random.randint(1000, 9999)
+                key_name = f'{timestamp_sec}_{unique_id}_DS'
+                self.offline_store.put(key_name, order_data=payload, synced=False, sync_timestamp=0)
+                self.cart = []
+                self.update_cart_button()
+                self.notify('Hors ligne: Demande sauvegardée localement.', 'warning')
+                self.go_back()
+                self._reset_notification_state(0)
+            except Exception as e:
+                self.notify(f'Erreur sauvegarde locale: {e}', 'error')
+        if not self.is_server_reachable:
+            save_offline()
+            return
+
+        def on_success(req, res):
+            if res.get('status') == 'success':
+                req_id = res.get('request_id')
+                self.cart = []
+                self.update_cart_button()
+                self.notify(f'✅ Demande envoyée (N° {req_id})', 'success')
+                self.go_back()
+            else:
+                msg = res.get('message', 'Erreur inconnue')
+                self.notify(f'Erreur Serveur: {msg}', 'error')
+
+        def on_failure(req, err):
+            print(f'[Request Error] {err}')
+            save_offline()
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/submit_driver_request'
+        UrlRequest(url, req_body=json.dumps(payload), req_headers={'Content-type': 'application/json'}, method='POST', on_success=on_success, on_failure=on_failure, on_error=on_failure, timeout=10)
+
     def submit_simple_payment_offline(self, data):
         self.save_to_history(data, synced=False)
         change = -float(data['amount'])
@@ -1943,6 +2013,17 @@ class StockApp(MDApp):
         except:
             pass
 
+    def show_catalog_qr(self):
+        url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/menu/0'
+        qr_api_url = f'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={url}'
+        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(300), padding=dp(20), spacing=dp(10))
+        qr_img = AsyncImage(source=qr_api_url, size_hint=(None, None), size=(dp(200), dp(200)), pos_hint={'center_x': 0.5})
+        content.add_widget(qr_img)
+        lbl = MDLabel(text=f'Scannez pour voir le catalogue', halign='center', font_style='Subtitle1', theme_text_color='Primary', bold=True)
+        content.add_widget(lbl)
+        self.qr_dialog = MDDialog(title='Catalogue QR', type='custom', content_cls=content, buttons=[MDFlatButton(text='FERMER', on_release=lambda x: self.qr_dialog.dismiss())])
+        self.qr_dialog.open()
+
     def update_dashboard_layout(self):
         if not self.buttons_container or not self.stats_card_container:
             return
@@ -1957,6 +2038,7 @@ class StockApp(MDApp):
         col_deep_orange = (1, 0.3, 0, 1)
         col_brown = (0.4, 0.2, 0.1, 1)
         col_cyan = (0, 0.6, 0.6, 1)
+        col_indigo = (0.3, 0.2, 0.8, 1)
         bg_green = (0.9, 1, 0.9, 1)
         bg_blue = (0.9, 0.95, 1, 1)
         bg_purple = (0.95, 0.9, 1, 1)
@@ -1965,12 +2047,16 @@ class StockApp(MDApp):
         bg_orange = (1, 0.95, 0.8, 1)
         bg_deep_orange = (1, 0.9, 0.8, 1)
         bg_brown = (1, 0.85, 0.85, 1)
+        bg_indigo = (0.92, 0.9, 1, 1)
+        current_sales_mode = getattr(self, 'user_sales_mode', 'store')
+        is_truck_mode = current_sales_mode == 'truck'
         if self.is_seller_mode:
             self.buttons_container.add_widget(self._create_dash_btn('cart', 'VENTE (BV)', bg_green, col_green, lambda x: self.open_mode('sale')))
-            grid = MDGridLayout(cols=2, spacing=dp(10), adaptive_height=True)
-            grid.add_widget(self._create_dash_btn('keyboard-return', 'RETOUR CL.', bg_red, col_red, lambda x: self.open_mode('return_sale')))
-            grid.add_widget(self._create_dash_btn('account-group', 'CLIENTS', bg_teal, col_teal, lambda x: self.open_entity_manager('account')))
-            self.buttons_container.add_widget(grid)
+            if is_truck_mode:
+                self.buttons_container.add_widget(self._create_dash_btn('truck-delivery', 'DEMANDE STOCK', (0.8, 0.9, 1, 1), (0.1, 0.4, 0.8, 1), lambda x: self.open_mode('request_stock')))
+            self.buttons_container.add_widget(self._create_dash_btn('keyboard-return', 'RETOUR CL.', bg_red, col_red, lambda x: self.open_mode('return_sale')))
+            self.buttons_container.add_widget(self._create_dash_btn('account-group', 'CLIENTS', bg_teal, col_teal, lambda x: self.open_entity_manager('account')))
+            self.buttons_container.add_widget(self._create_dash_btn('qrcode-scan', 'CATALOGUE', bg_indigo, col_indigo, lambda x: self.show_catalog_qr()))
         else:
             grid = MDGridLayout(cols=2, spacing=dp(10), adaptive_height=True)
             grid.add_widget(self._create_dash_btn('cart', 'VENTE (BV)', bg_green, col_green, lambda x: self.open_mode('sale')))
@@ -1986,6 +2072,7 @@ class StockApp(MDApp):
             grid.add_widget(self._create_dash_btn('database-edit', 'PRODUITS', bg_blue, col_blue, lambda x: self.open_mode('manage_products')))
             grid.add_widget(self._create_dash_btn('transfer', 'TRANSFERT (TR)', bg_purple, col_purple, lambda x: self.open_mode('transfer')))
             self.buttons_container.add_widget(grid)
+            self.buttons_container.add_widget(self._create_dash_btn('qrcode-scan', 'CATALOGUE', bg_indigo, col_indigo, lambda x: self.show_catalog_qr()))
         self.stats_card_container.add_widget(MDLabel(text='Statistiques Journalières', font_style='Subtitle1', bold=True, halign='center', size_hint_y=None, height=dp(30)))
         stats_grid = MDGridLayout(cols=2, spacing=dp(10))
         stats_grid.add_widget(self._create_stat_item('Ventes (Espèce)', 'lbl_stat_sales', col_green))
@@ -2496,7 +2583,11 @@ class StockApp(MDApp):
         try:
             item_data = self.offline_store.get(key)
             data = item_data['order_data']
-            endpoint = '/api/submit_payment' if data.get('is_simple_payment') else '/api/submit_order'
+            endpoint = '/api/submit_order'
+            if data.get('is_simple_payment'):
+                endpoint = '/api/submit_payment'
+            elif data.get('doc_type') == 'DS':
+                endpoint = '/api/submit_driver_request'
 
             def next_step(*args):
                 Clock.schedule_once(lambda d: self.try_sync_offline_data(), 0.5)
@@ -2505,20 +2596,25 @@ class StockApp(MDApp):
                 item_data['synced'] = True
                 item_data['sync_timestamp'] = time.time()
                 if res.get('server_id'):
-                    item_data['order_data']['server_id'] = res.get('server_id')
-                if res.get('invoice_number'):
+                    if 'order_data' in item_data:
+                        item_data['order_data']['server_id'] = res.get('server_id')
+                    if res.get('request_id'):
+                        pass
+                if res.get('invoice_number') and 'order_data' in item_data:
                     item_data['order_data']['invoice_number'] = res.get('invoice_number')
                 self.offline_store.put(key, **item_data)
-                self.notify(f"Sync OK: {data.get('doc_type', 'Op')}", 'success')
+                doc_name = data.get('doc_type', 'Op')
+                if doc_name == 'DS':
+                    doc_name = 'Demande Stock'
+                self.notify(f'Sync OK: {doc_name}', 'success')
                 next_step()
 
             def failure(req, err):
-                print(f'Sync Fail for {key}: {err}')
-                next_step()
+                print(f'[Sync Error] Stopping sync queue due to error in {key}: {err}')
+                self.notify(f'Sync Paused: Error in item {key}', 'error')
             UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(data), req_headers={'Content-type': 'application/json'}, method='POST', on_success=success, on_failure=failure, on_error=failure, timeout=10)
         except Exception as e:
             print(f'Sync Logic Error: {e}')
-            Clock.schedule_once(lambda d: self.try_sync_offline_data(), 1)
 
     def notify(self, text, type='info'):
         if not self.status_bar_label:
@@ -2852,7 +2948,7 @@ class StockApp(MDApp):
         self.lbl_cart_screen_total = MDLabel(text='0.00 DA', halign='right', font_style='H5', bold=True, theme_text_color='Primary')
         total_row.add_widget(self.lbl_total_title)
         total_row.add_widget(self.lbl_cart_screen_total)
-        self.btn_validate_cart = MDFillRoundFlatButton(text='VALIDER LA COMMANDE', size_hint_x=1, height=dp(55), md_bg_color=(0, 0.7, 0, 1), on_release=self.open_payment_dialog)
+        self.btn_validate_cart = MDFillRoundFlatButton(text='VALIDER LA COMMANDE', size_hint_x=1, height=dp(55), md_bg_color=(0, 0.7, 0, 1), on_release=self.validate_cart_action)
         self.footer_card.add_widget(total_row)
         self.footer_card.add_widget(self.btn_validate_cart)
         layout.add_widget(self.footer_card)
@@ -2863,6 +2959,11 @@ class StockApp(MDApp):
         if not self.cart:
             self.dialog = MDDialog(title='Panier vide', text='Veuillez ajouter au moins un produit pour continuer.', buttons=[MDFlatButton(text='OK', on_release=lambda x: self.dialog.dismiss())])
             self.dialog.open()
+            return
+        if self.current_mode == 'request_stock':
+            self.refresh_cart_screen_items()
+            self.sm.transition.direction = 'left'
+            self.sm.current = 'cart'
             return
         if self.current_mode != 'transfer' and self.selected_entity is None:
             self.show_entity_selection_dialog(None, next_action=lambda: self.open_cart_screen(None))
@@ -2901,17 +3002,49 @@ class StockApp(MDApp):
             else:
                 self.lbl_total_title.text = 'TOTAL:'
         self.update_location_display()
-        if hasattr(self, 'btn_ent_screen'):
-            if self.current_mode == 'transfer':
+        if self.current_mode == 'request_stock':
+            if hasattr(self, 'btn_ent_screen'):
+                self.btn_ent_screen.opacity = 0
+                self.btn_ent_screen.disabled = True
+            if hasattr(self, 'btn_validate_cart'):
+                self.btn_validate_cart.text = 'ENVOYER LA DEMANDE'
+                self.btn_validate_cart.md_bg_color = (0.2, 0.6, 0.8, 1)
+            if hasattr(self, 'total_bg_card'):
+                self.total_bg_card.opacity = 0
+            if hasattr(self, 'lbl_total_title'):
+                self.lbl_total_title.text = ''
+            if hasattr(self, 'lbl_cart_screen_total'):
+                self.lbl_cart_screen_total.text = ''
+        elif self.current_mode == 'transfer':
+            if hasattr(self, 'btn_ent_screen'):
+                self.btn_ent_screen.opacity = 1
+                self.btn_ent_screen.disabled = False
                 src = 'Magasin' if self.selected_location == 'store' else 'Dépôt'
                 dst = 'Dépôt' if self.selected_location == 'store' else 'Magasin'
                 self.btn_ent_screen.text = f'{src}  >>>  {dst}'
                 self.btn_ent_screen.md_bg_color = (0.5, 0, 0.5, 1)
-            else:
+            if hasattr(self, 'btn_validate_cart'):
+                self.btn_validate_cart.text = 'VALIDER LE TRANSFERT'
+                self.btn_validate_cart.md_bg_color = (0.5, 0, 0.5, 1)
+            if hasattr(self, 'total_bg_card'):
+                self.total_bg_card.opacity = 0
+            if hasattr(self, 'lbl_total_title'):
+                self.lbl_total_title.text = ''
+            if hasattr(self, 'lbl_cart_screen_total'):
+                self.lbl_cart_screen_total.text = ''
+        else:
+            if hasattr(self, 'btn_ent_screen'):
+                self.btn_ent_screen.opacity = 1
+                self.btn_ent_screen.disabled = False
                 if self.selected_entity:
                     self.btn_ent_screen.text = self.fix_text(self.selected_entity.get('name', 'Client'))[:15]
                 color_bg = (0, 0.6, 0.6, 1) if self.current_mode in ['sale', 'invoice_sale'] else (0.8, 0.4, 0, 1)
                 self.btn_ent_screen.md_bg_color = color_bg
+            if hasattr(self, 'btn_validate_cart'):
+                self.btn_validate_cart.text = 'VALIDER LA COMMANDE'
+                self.btn_validate_cart.md_bg_color = (0, 0.7, 0, 1)
+            if hasattr(self, 'total_bg_card'):
+                self.total_bg_card.opacity = 1
         rv_data = []
         for item in self.cart:
             try:
@@ -2921,7 +3054,7 @@ class StockApp(MDApp):
                 line_ht = self._round_num(p * q)
                 line_ttc = self._round_num(line_ht * (1 + t_rate / 100.0))
                 q_disp = str(int(q)) if q.is_integer() else str(q)
-                if self.current_mode == 'transfer':
+                if self.current_mode in ['transfer', 'request_stock']:
                     details_text = f'Qté: {q_disp}'
                     d_color = [0.1, 0.4, 0.8, 1]
                 else:
@@ -2936,16 +3069,6 @@ class StockApp(MDApp):
         if hasattr(self, 'rv_cart'):
             self.rv_cart.data = rv_data
             self.rv_cart.refresh_from_data()
-        if self.current_mode == 'transfer':
-            if hasattr(self, 'total_bg_card'):
-                self.total_bg_card.opacity = 0
-            if hasattr(self, 'btn_validate_cart'):
-                self.btn_validate_cart.text = 'VALIDER LE TRANSFERT'
-        else:
-            if hasattr(self, 'total_bg_card'):
-                self.total_bg_card.opacity = 1
-            if hasattr(self, 'btn_validate_cart'):
-                self.btn_validate_cart.text = 'VALIDER LA COMMANDE'
 
     def edit_cart_item(self, item):
 
@@ -2958,7 +3081,10 @@ class StockApp(MDApp):
             except:
                 return '0'
         is_invoice = self.current_mode in ['invoice_sale', 'invoice_purchase', 'proforma']
+        is_request = self.current_mode == 'request_stock'
         dialog_height = dp(600) if is_invoice else dp(520)
+        if is_request:
+            dialog_height = dp(350)
         content = MDBoxLayout(orientation='vertical', spacing='10dp', size_hint_y=None, height=dialog_height, padding=[0, '5dp', 0, 0])
         self.active_edit_target = 'qty'
         self.input_reset_mode = True
@@ -3021,7 +3147,7 @@ class StockApp(MDApp):
             product_name = self.fix_text(raw_name)
             lbl_prod = MDLabel(text=product_name, halign='center', bold=True, font_style='Subtitle1', theme_text_color='Primary', adaptive_height=True)
             content.add_widget(lbl_prod)
-        if self.current_mode != 'transfer':
+        if self.current_mode != 'transfer' and (not is_request):
             price_val = item.get('price', 0)
             self.edit_price_card = MDCard(size_hint_y=None, height='70dp', radius=[10], padding=[10, 0, 10, 0], elevation=0)
             self.edit_price_field = NoMenuTextField(text=fmt_num(price_val), hint_text='Prix Unitaire (DA)', font_size='26sp', halign='center', mode='line', readonly=True, line_color_normal=(0, 0, 0, 0), line_color_focus=(0, 0, 0, 0), pos_hint={'center_y': 0.5})
@@ -3110,7 +3236,7 @@ class StockApp(MDApp):
                     tva = 0.0
             line_ht = self._round_num(q * p)
             total = self._round_num(line_ht * (1 + tva / 100.0))
-            if self.current_mode != 'transfer':
+            if self.current_mode != 'transfer' and (not is_request):
                 self.btn_save_edit.text = f'MODIFIER\n{total:.2f} DA'
             else:
                 self.btn_save_edit.text = 'MODIFIER'
@@ -3221,7 +3347,7 @@ class StockApp(MDApp):
                         item['price'] = float(p_text)
                     else:
                         item['price'] = new_price
-                elif self.current_mode != 'transfer' and hasattr(self, 'edit_price_field'):
+                elif self.current_mode != 'transfer' and (not is_request) and hasattr(self, 'edit_price_field'):
                     p_text = self.edit_price_field.text or '0'
                     new_p = float(p_text)
                     if new_p < 0:
@@ -3636,6 +3762,7 @@ class StockApp(MDApp):
             except:
                 return str(value)
         is_transfer = mode == 'transfer'
+        is_request = mode == 'request_stock'
         is_sale_context = mode in ['sale', 'return_sale', 'invoice_sale', 'proforma']
         curr_price = 0
         if is_sale_context:
@@ -3682,10 +3809,10 @@ class StockApp(MDApp):
         if is_sale_context and product.get('has_promo', False):
             promo_label = MDLabel(text='PROMOTION ACTIVÉE', halign='center', theme_text_color='Custom', text_color=(1, 0, 0, 1), font_style='Caption', bold=True, adaptive_height=True)
             header_box.add_widget(promo_label)
-        dialog_height = dp(420) if is_transfer else dp(500)
+        dialog_height = dp(420) if is_transfer or is_request else dp(500)
         content = MDBoxLayout(orientation='vertical', spacing='8dp', size_hint_y=None, height=dialog_height, padding=[0, '5dp', 0, 0])
         content.add_widget(header_box)
-        if not is_transfer:
+        if not is_transfer and (not is_request):
             self.price_card = MDCard(size_hint_y=None, height='70dp', radius=[10], padding=[10, 0, 10, 0], elevation=0)
             self.price_field = NoMenuTextField(text=price_val_str, hint_text='Prix Unitaire (DA)', font_size='26sp', halign='center', mode='line', readonly=True, line_color_normal=(0, 0, 0, 0), line_color_focus=(0, 0, 0, 0), pos_hint={'center_y': 0.5})
             self.price_field.theme_text_color = 'Custom'
@@ -3731,7 +3858,7 @@ class StockApp(MDApp):
         content.add_widget(qty_row)
         self.btn_add = MDRaisedButton(text='AJOUTER', md_bg_color=(0, 0.7, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=0.7, size_hint_y=1, font_size='18sp', elevation=3)
         temp_product = product.copy()
-        if is_sale_context and (not is_transfer):
+        if is_sale_context and (not is_transfer) and (not is_request):
             temp_product['price'] = float(curr_price or 0)
 
         def perform_add(x):
@@ -3751,7 +3878,7 @@ class StockApp(MDApp):
                         if in_cart_qty + req_qty > available_stock:
                             self.notify(f'Stock VAN insuffisant ! Disponible : {int(available_stock)}', 'error')
                             return
-                if not is_transfer and hasattr(self, 'price_field'):
+                if not is_transfer and (not is_request) and hasattr(self, 'price_field'):
                     p_text = self.price_field.text
                     if not p_text:
                         p_text = '0'
@@ -3766,7 +3893,7 @@ class StockApp(MDApp):
         self.btn_add.bind(on_release=perform_add)
 
         def update_button_text():
-            if is_transfer:
+            if is_transfer or is_request:
                 self.btn_add.text = 'AJOUTER'
                 return
             try:
@@ -3800,7 +3927,7 @@ class StockApp(MDApp):
         btn_minus.bind(on_release=decrease)
 
         def get_active_field():
-            if is_transfer:
+            if is_transfer or is_request:
                 return self.qty_field
             return self.price_field if self.active_input_target == 'price' else self.qty_field
 
@@ -4080,7 +4207,7 @@ class StockApp(MDApp):
             total = sum((float(item['price'] or 0) * float(item['qty'] or 0) * (1 + (float(item.get('tva', 0)) if is_invoice_mode else 0) / 100) for item in self.cart))
             if self.lbl_cart_count:
                 self.lbl_cart_count.text = f'PANIER ({count})'
-            if self.current_mode == 'transfer':
+            if self.current_mode in ['transfer', 'request_stock']:
                 if self.lbl_cart_total:
                     self.lbl_cart_total.text = ''
             elif self.lbl_cart_total:
@@ -5226,7 +5353,7 @@ class StockApp(MDApp):
         header_box.add_widget(MDLabel(text=self.fix_text(f'{full_doc_name} - {entity_name}'), bold=True, font_style='Subtitle1', adaptive_height=True))
         header_box.add_widget(MDLabel(text=f'Date: {date_display}', font_style='Caption', theme_text_color='Secondary', adaptive_height=True))
         header_box.add_widget(MDLabel(text=f'Montant: {display_amount}', theme_text_color='Custom', text_color=amount_color, bold=True, font_style='H5', adaptive_height=True))
-        if not is_financial and (not is_transfer):
+        if not is_financial and (not is_transfer) and (doc_type not in ['RC', 'RF']):
             if timbre > 0:
                 header_box.add_widget(MDLabel(text=f'Timbre: {timbre:.2f} DA', font_style='Caption', theme_text_color='Custom', text_color=(0.5, 0, 0.5, 1), adaptive_height=True))
             diff = round(final_total - paid_amount, 2)
@@ -5420,7 +5547,7 @@ class StockApp(MDApp):
             header_box.add_widget(MDLabel(text=f'Montant: {display_amount_str}', theme_text_color='Custom', text_color=amount_color, bold=True, font_style='H5', adaptive_height=True))
             if timbre_to_show > 0:
                 header_box.add_widget(MDLabel(text=f'Droit de Timbre: {timbre_to_show:.2f} DA', theme_text_color='Custom', text_color=(0.5, 0, 0.5, 1), bold=True, font_style='Caption', adaptive_height=True))
-            if not is_financial_op and prefix not in ['FP', 'DP']:
+            if not is_financial_op and prefix not in ['FP', 'DP', 'RC', 'RF']:
                 paid_float = paid_val if not is_comptoir else display_total
                 diff = self._round_num(display_total - paid_float)
                 if abs(diff) < 0.05:
