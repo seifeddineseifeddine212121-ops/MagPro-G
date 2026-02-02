@@ -35,7 +35,6 @@ from kivy.properties import StringProperty, NumericProperty, ObjectProperty, Lis
 from kivy.storage.jsonstore import JsonStore
 from kivy.uix.behaviors import ButtonBehavior as KivyButtonBehavior
 from kivy.uix.camera import Camera
-from kivy.uix.image import AsyncImage
 from kivy.uix.modalview import ModalView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
@@ -2013,16 +2012,14 @@ class StockApp(MDApp):
         except:
             pass
 
-    def show_catalog_qr(self):
+    def open_catalogue_browser(self, instance):
+        import webbrowser
         url = f'http://{self.active_server_ip}:{DEFAULT_PORT}/menu/0'
-        qr_api_url = f'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={url}'
-        content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(300), padding=dp(20), spacing=dp(10))
-        qr_img = AsyncImage(source=qr_api_url, size_hint=(None, None), size=(dp(200), dp(200)), pos_hint={'center_x': 0.5})
-        content.add_widget(qr_img)
-        lbl = MDLabel(text=f'Scannez pour voir le catalogue', halign='center', font_style='Subtitle1', theme_text_color='Primary', bold=True)
-        content.add_widget(lbl)
-        self.qr_dialog = MDDialog(title='Catalogue QR', type='custom', content_cls=content, buttons=[MDFlatButton(text='FERMER', on_release=lambda x: self.qr_dialog.dismiss())])
-        self.qr_dialog.open()
+        try:
+            webbrowser.open(url)
+            self.notify('Ouverture du Catalogue...', 'info')
+        except Exception as e:
+            self.notify(f'Erreur navigateur: {e}', 'error')
 
     def update_dashboard_layout(self):
         if not self.buttons_container or not self.stats_card_container:
@@ -2038,7 +2035,8 @@ class StockApp(MDApp):
         col_deep_orange = (1, 0.3, 0, 1)
         col_brown = (0.4, 0.2, 0.1, 1)
         col_cyan = (0, 0.6, 0.6, 1)
-        col_indigo = (0.3, 0.2, 0.8, 1)
+        col_catalogue = (0.8, 0, 0.4, 1)
+        bg_catalogue = (1, 0.9, 0.95, 1)
         bg_green = (0.9, 1, 0.9, 1)
         bg_blue = (0.9, 0.95, 1, 1)
         bg_purple = (0.95, 0.9, 1, 1)
@@ -2047,7 +2045,6 @@ class StockApp(MDApp):
         bg_orange = (1, 0.95, 0.8, 1)
         bg_deep_orange = (1, 0.9, 0.8, 1)
         bg_brown = (1, 0.85, 0.85, 1)
-        bg_indigo = (0.92, 0.9, 1, 1)
         current_sales_mode = getattr(self, 'user_sales_mode', 'store')
         is_truck_mode = current_sales_mode == 'truck'
         if self.is_seller_mode:
@@ -2056,7 +2053,7 @@ class StockApp(MDApp):
                 self.buttons_container.add_widget(self._create_dash_btn('truck-delivery', 'DEMANDE STOCK', (0.8, 0.9, 1, 1), (0.1, 0.4, 0.8, 1), lambda x: self.open_mode('request_stock')))
             self.buttons_container.add_widget(self._create_dash_btn('keyboard-return', 'RETOUR CL.', bg_red, col_red, lambda x: self.open_mode('return_sale')))
             self.buttons_container.add_widget(self._create_dash_btn('account-group', 'CLIENTS', bg_teal, col_teal, lambda x: self.open_entity_manager('account')))
-            self.buttons_container.add_widget(self._create_dash_btn('qrcode-scan', 'CATALOGUE', bg_indigo, col_indigo, lambda x: self.show_catalog_qr()))
+            self.buttons_container.add_widget(self._create_dash_btn('book-open-page-variant', 'CATALOGUE', bg_catalogue, col_catalogue, self.open_catalogue_browser))
         else:
             grid = MDGridLayout(cols=2, spacing=dp(10), adaptive_height=True)
             grid.add_widget(self._create_dash_btn('cart', 'VENTE (BV)', bg_green, col_green, lambda x: self.open_mode('sale')))
@@ -2072,7 +2069,7 @@ class StockApp(MDApp):
             grid.add_widget(self._create_dash_btn('database-edit', 'PRODUITS', bg_blue, col_blue, lambda x: self.open_mode('manage_products')))
             grid.add_widget(self._create_dash_btn('transfer', 'TRANSFERT (TR)', bg_purple, col_purple, lambda x: self.open_mode('transfer')))
             self.buttons_container.add_widget(grid)
-            self.buttons_container.add_widget(self._create_dash_btn('qrcode-scan', 'CATALOGUE', bg_indigo, col_indigo, lambda x: self.show_catalog_qr()))
+            self.buttons_container.add_widget(self._create_dash_btn('book-open-page-variant', 'OUVRIR LE CATALOGUE', bg_catalogue, col_catalogue, self.open_catalogue_browser))
         self.stats_card_container.add_widget(MDLabel(text='Statistiques Journalières', font_style='Subtitle1', bold=True, halign='center', size_hint_y=None, height=dp(30)))
         stats_grid = MDGridLayout(cols=2, spacing=dp(10))
         stats_grid.add_widget(self._create_stat_item('Ventes (Espèce)', 'lbl_stat_sales', col_green))
