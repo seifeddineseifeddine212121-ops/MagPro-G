@@ -2740,15 +2740,25 @@ class StockApp(MDApp):
             if platform == 'android':
                 Clock.schedule_once(lambda dt: self.start_gps_service(), 1)
         else:
-            self.notify('Identifiants incorrects', 'error')
+            error_msg = res.get('message', "Nom d'utilisateur ou mot de passe incorrect.")
+            self.show_login_error_dialog(error_msg)
+
+    def show_login_error_dialog(self, message):
+        if hasattr(self, 'login_error_dialog') and self.login_error_dialog:
+            self.login_error_dialog.dismiss()
+        self.login_error_dialog = MDDialog(title='Erreur de Connexion', text=f'\n{message}\n\nVeuillez vérifier vos identifiants.', buttons=[MDRaisedButton(text='RÉESSAYER', md_bg_color=(0.8, 0, 0, 1), on_release=lambda x: self.login_error_dialog.dismiss())])
+        self.login_error_dialog.open()
 
     def login_fail(self, req, res):
-        self.check_offline_access()
+        error_msg = 'Données de connexion incorrectes'
+        if isinstance(res, dict) and 'message' in res:
+            error_msg = res['message']
+        self.check_offline_access(error_msg_if_failed=error_msg)
 
     def login_error(self, req, error):
-        self.check_offline_access()
+        self.check_offline_access(error_msg_if_failed='Serveur inaccessible (Erreur Connexion)')
 
-    def check_offline_access(self):
+    def check_offline_access(self, error_msg_if_failed='Erreur de connexion'):
         if self.store.exists('credentials'):
             creds = self.store.get('credentials')
             if self.username_field.get_value() == creds.get('username', '') and self.password_field.get_value() == creds.get('password', ''):
@@ -2765,11 +2775,11 @@ class StockApp(MDApp):
                         self.all_suppliers = self.cache_store.get('suppliers')['data']
                     self.check_and_load_stats()
                 else:
-                    self.notify('Pas de données locales', 'error')
+                    self.show_login_error_dialog('Pas de données locales pour le mode hors ligne.')
             else:
-                self.notify('Erreur Login', 'error')
+                self.show_login_error_dialog(error_msg_if_failed)
         else:
-            self.notify('Serveur inaccessible', 'error')
+            self.show_login_error_dialog(error_msg_if_failed)
 
     def logout(self):
 
@@ -3466,11 +3476,6 @@ class StockApp(MDApp):
                 screen_layout.add_widget(lbl_screen)
                 screen_layout.add_widget(chk_screen)
                 content_list.add_widget(screen_layout)
-            add_section('ADMINISTRATION')
-            if not self.is_seller_mode:
-                add_option('Activer Mode Vendeur', 'Verrouiller les paramètres', 'shield-account', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
-            else:
-                add_option('Quitter Mode Vendeur', 'Accès Admin requis', 'lock-open', lambda x: [self.dialog.dismiss(), self.open_seller_auth_dialog(x)])
             scroll_view.add_widget(content_list)
             self.dialog = MDDialog(title='Paramètres', type='custom', content_cls=scroll_view, buttons=[MDFlatButton(text='FERMER', theme_text_color='Custom', text_color=self.theme_cls.primary_color, on_release=lambda x: self.dialog.dismiss())], size_hint=(0.95, None))
             self.dialog.open()
@@ -3512,57 +3517,6 @@ class StockApp(MDApp):
             name = conf.get('name', '')
             mac = conf.get('mac', '')
         self.store.put('printer_config', name=name, mac=mac, auto=value)
-
-    def open_seller_auth_dialog(self, x):
-        if self.dialog:
-            self.dialog.dismiss()
-        has_pass = self.store.exists('seller_config')
-        if has_pass:
-            title = 'Accès Admin'
-            height = dp(80)
-        else:
-            title = 'Créer Mot de Passe'
-            height = dp(150)
-        content = MDBoxLayout(orientation='vertical', spacing=10, size_hint_y=None, height=height)
-        hint_1 = 'Mot de passe Admin' if has_pass else 'Nouveau mot de passe'
-        self.seller_pass_field = MDTextField(hint_text=hint_1, password=True, halign='center')
-        content.add_widget(self.seller_pass_field)
-        self.seller_pass_confirm_field = None
-        if not has_pass:
-            self.seller_pass_confirm_field = MDTextField(hint_text='Confirmer le mot de passe', password=True, halign='center')
-            content.add_widget(self.seller_pass_confirm_field)
-        self.auth_dialog = MDDialog(title=title, type='custom', content_cls=content, buttons=[MDFlatButton(text='ANNULER', on_release=lambda x: self.auth_dialog.dismiss()), MDRaisedButton(text='OK', on_release=lambda x: self.check_create_seller_pass(has_pass))])
-        self.auth_dialog.open()
-
-    def check_create_seller_pass(self, exists):
-        pwd = self.seller_pass_field.text
-        if not pwd:
-            return
-        if exists:
-            if pwd == self.store.get('seller_config')['password']:
-                self.auth_dialog.dismiss()
-                self.open_seller_toggle_dialog()
-            else:
-                self.notify('Mot de passe incorrect', 'error')
-        else:
-            self.store.put('seller_config', password=pwd)
-            self.auth_dialog.dismiss()
-            self.open_seller_toggle_dialog()
-
-    def open_seller_toggle_dialog(self):
-        content = MDBoxLayout(orientation='horizontal', spacing=20, size_hint_y=None, height=dp(50), padding=[20, 0])
-        content.add_widget(MDLabel(text='Mode Vendeur (Restreint)'))
-        chk = MDCheckbox(active=self.is_seller_mode, size_hint=(None, None), size=(dp(48), dp(48)))
-        chk.bind(active=self.on_seller_mode_switch)
-        content.add_widget(chk)
-        self.toggle_dialog = MDDialog(title='Configuration Mode', type='custom', content_cls=content, buttons=[MDFlatButton(text='FERMER', on_release=lambda x: self.toggle_dialog.dismiss())])
-        self.toggle_dialog.open()
-
-    def on_seller_mode_switch(self, instance, value):
-        self.is_seller_mode = value
-        self.store.put('config', ip=self.local_server_ip, ext_ip=self.external_server_ip, seller_mode=value)
-        self.update_dashboard_layout()
-        self.notify(f"Mode Vendeur: {('Activé' if value else 'Désactivé')}", 'info')
 
     def open_family_selector_dialog(self):
         if not hasattr(self, 'all_categories') or not self.all_categories:
@@ -4230,13 +4184,23 @@ class StockApp(MDApp):
                 break
         if not found:
             self.cart.append({'id': product['id'], 'name': product['name'], 'price': final_price, 'qty': qty, 'original_unit_price': original_unit_price, 'special_prices': specials, 'has_promo': product.get('has_promo', False)})
+            prod_id = str(product.get('id'))
+            item_to_remove = None
+            for item in self.current_product_list_source:
+                if str(item.get('id')) == prod_id:
+                    item_to_remove = item
+                    break
+            if item_to_remove:
+                self.current_product_list_source.remove(item_to_remove)
+                if item_to_remove in self.all_products_raw:
+                    self.all_products_raw.remove(item_to_remove)
+                self.load_more_products(reset=True)
         if hasattr(self, 'dialog') and self.dialog:
             self.dialog.dismiss()
         self.update_cart_button()
         self.notify('Ajouté au panier', 'success')
         if hasattr(self, 'search_field') and self.search_field:
             self.search_field.text = ''
-            self.filter_products(None, '')
             Clock.schedule_once(lambda x: setattr(self.search_field, 'focus', True), 0.2)
 
     def update_cart_button(self):
@@ -4257,6 +4221,20 @@ class StockApp(MDApp):
     def remove_from_cart(self, item):
         if item in self.cart:
             self.cart.remove(item)
+            product_id = str(item.get('id'))
+            restored_product = None
+            if self.cache_store.exists('products'):
+                cached_data = self.cache_store.get('products')['data']
+                for p in cached_data:
+                    if str(p.get('id')) == product_id:
+                        restored_product = p
+                        break
+            if restored_product:
+                if restored_product not in self.all_products_raw:
+                    self.all_products_raw.append(restored_product)
+                self.current_product_list_source.append(restored_product)
+                if self.sm.current == 'products':
+                    self.load_more_products(reset=True)
         self.refresh_cart_screen_items()
         self.update_cart_button()
 
@@ -4949,14 +4927,22 @@ class StockApp(MDApp):
         self.go_back()
 
     def show_pending_dialog(self):
+        self.current_history_filter = 'ALL'
         content = MDBoxLayout(orientation='vertical', size_hint_y=None, height=dp(550))
-        tabs_box = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), spacing=5)
-        self.btn_hist_today = MDRaisedButton(text='AUJ.', size_hint_x=0.33, elevation=0, on_release=lambda x: self.filter_history_list(day_offset=0))
-        self.btn_hist_yesterday = MDRaisedButton(text='HIER', size_hint_x=0.33, elevation=0, md_bg_color=(0.5, 0.5, 0.5, 1), on_release=lambda x: self.filter_history_list(day_offset=1))
-        self.btn_hist_date = MDRaisedButton(text='CALENDRIER', size_hint_x=0.33, elevation=0, md_bg_color=(0.5, 0.5, 0.5, 1), on_release=self.open_history_date_picker)
+        tabs_box = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), spacing=dp(5))
+        if self.is_seller_mode:
+            btn_width = 0.33
+        else:
+            btn_width = 0.24
+        self.btn_hist_today = MDRaisedButton(text='AUJ.', size_hint_x=btn_width, elevation=0, on_release=lambda x: self.filter_history_list(day_offset=0))
+        self.btn_hist_yesterday = MDRaisedButton(text='HIER.', size_hint_x=btn_width, elevation=0, md_bg_color=(0.5, 0.5, 0.5, 1), on_release=lambda x: self.filter_history_list(day_offset=1))
+        self.btn_hist_date = MDRaisedButton(text='CALEND.', size_hint_x=btn_width, elevation=0, md_bg_color=(0.5, 0.5, 0.5, 1), on_release=self.open_history_date_picker)
         tabs_box.add_widget(self.btn_hist_today)
         tabs_box.add_widget(self.btn_hist_yesterday)
         tabs_box.add_widget(self.btn_hist_date)
+        if not self.is_seller_mode:
+            self.btn_hist_filter = MDRaisedButton(text='FILT.', size_hint_x=btn_width, elevation=0, md_bg_color=(0.2, 0.2, 0.2, 1), text_color=(1, 1, 1, 1), on_release=self.open_history_filter_menu)
+            tabs_box.add_widget(self.btn_hist_filter)
         content.add_widget(tabs_box)
         self.rv_history = HistoryRecycleView()
         content.add_widget(self.rv_history)
@@ -4964,11 +4950,34 @@ class StockApp(MDApp):
         self.pending_dialog.open()
         self.filter_history_list(day_offset=0)
 
+    def open_history_filter_menu(self, instance):
+        from kivymd.uix.menu import MDDropdownMenu
+        menu_items = [{'text': 'Tout', 'viewclass': 'OneLineListItem', 'on_release': lambda x='ALL': self.set_history_filter(x)}, {'text': 'Vente (BV)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='BV': self.set_history_filter(x)}, {'text': 'Achat (BA)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='BA': self.set_history_filter(x)}, {'text': 'Bon Initial (BI)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='BI': self.set_history_filter(x)}, {'text': 'Bon Commande (DP)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='DP': self.set_history_filter(x)}, {'text': 'Proforma (FP)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='FP': self.set_history_filter(x)}, {'text': 'Transfert (TR)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='TR': self.set_history_filter(x)}, {'text': 'Facture Vente (FC)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='FC': self.set_history_filter(x)}, {'text': 'Facture Achat (FF)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='FF': self.set_history_filter(x)}, {'text': 'Retour Client (RC)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='RC': self.set_history_filter(x)}, {'text': 'Retour Frns (RF)', 'viewclass': 'OneLineListItem', 'on_release': lambda x='RF': self.set_history_filter(x)}]
+        self.hist_filter_menu = MDDropdownMenu(caller=instance, items=menu_items, width_mult=4)
+        self.hist_filter_menu.open()
+
+    def set_history_filter(self, filter_type):
+        self.current_history_filter = filter_type
+        if hasattr(self, 'hist_filter_menu'):
+            self.hist_filter_menu.dismiss()
+        if hasattr(self, 'btn_hist_filter'):
+            if filter_type == 'ALL':
+                self.btn_hist_filter.md_bg_color = (0.2, 0.2, 0.2, 1)
+                self.btn_hist_filter.text = 'FILTRER'
+            else:
+                self.btn_hist_filter.md_bg_color = (0, 0.6, 0.8, 1)
+                self.btn_hist_filter.text = f'FILTRE: {filter_type}'
+        self.notify(f'Filtre actif: {filter_type}', 'info')
+        target_date = getattr(self, 'history_view_date', datetime.now().date())
+        self.filter_history_list(specific_date=target_date)
+
     def filter_history_list(self, day_offset=None, specific_date=None):
         if not hasattr(self, 'btn_hist_today') or not self.btn_hist_today:
             if specific_date:
                 self.history_view_date = specific_date
             return
+        if not hasattr(self, 'current_history_filter'):
+            self.current_history_filter = 'ALL'
         inactive_color = (0.5, 0.5, 0.5, 1)
         active_color = self.theme_cls.primary_color
         target_date = None
@@ -4984,7 +4993,7 @@ class StockApp(MDApp):
             self.btn_hist_today.md_bg_color = active_color if day_offset == 0 else inactive_color
             self.btn_hist_yesterday.md_bg_color = active_color if day_offset == 1 else inactive_color
             self.btn_hist_date.md_bg_color = inactive_color
-            self.btn_hist_date.text = 'CALENDRIER'
+            self.btn_hist_date.text = 'CALEND.'
         self.history_view_date = target_date
         self.history_rv_data = []
         keys = list(self.offline_store.keys())
@@ -4998,6 +5007,10 @@ class StockApp(MDApp):
                 if self.is_seller_mode:
                     local_user = str(data.get('user_name', '')).strip()
                     if local_user != self.current_user_name:
+                        continue
+                doc_type = data.get('doc_type', 'BV')
+                if self.current_history_filter != 'ALL':
+                    if doc_type != self.current_history_filter:
                         continue
                 parts = k.split('_')
                 if parts[0].isdigit():
@@ -5120,6 +5133,12 @@ class StockApp(MDApp):
                     continue
             desc = str(item.get('desc', '')).strip()
             prefix = desc[:2].upper() if len(desc) >= 2 else ''
+            if self.current_history_filter != 'ALL':
+                if self.current_history_filter == 'TR':
+                    if not item.get('is_transfer', False) and prefix != 'TR':
+                        continue
+                elif prefix != self.current_history_filter:
+                    continue
             desc_lower = desc.lower()
             is_transfer = item.get('is_transfer', False)
             amount = float(item.get('amount', 0))
@@ -5861,6 +5880,8 @@ class StockApp(MDApp):
                 self.search_field.text = ''
             self.cart = []
             self.update_cart_button()
+            if self.is_offline_mode or not self.is_server_reachable:
+                self.load_products_from_cache()
             self.sm.current = 'dashboard'
             self._reset_notification_state(0)
         except:
