@@ -4728,6 +4728,38 @@ class StockApp(MDApp):
     def process_transaction(self, paid_amount, total_amount, method=None):
         if getattr(self, 'is_transaction_in_progress', False):
             return
+        if self.current_mode == 'transfer':
+            source_loc = self.selected_location
+            error_msgs = []
+            for item in self.cart:
+                prod_id = item['id']
+                try:
+                    qty_needed = float(item['qty'])
+                except:
+                    qty_needed = 0
+                original_prod = next((p for p in self.all_products_raw if str(p.get('id')) == str(prod_id)), None)
+                if original_prod:
+                    stock_val = 0.0
+                    if source_loc == 'store':
+                        if 'real_stock_store' in original_prod:
+                            stock_val = float(original_prod['real_stock_store'])
+                        else:
+                            stock_val = float(original_prod.get('stock_store', 0) or 0)
+                        loc_name = 'Magasin'
+                    else:
+                        stock_val = float(original_prod.get('stock_warehouse', 0) or 0)
+                        loc_name = 'Dépôt'
+                    if stock_val > -900000:
+                        if qty_needed > stock_val:
+                            clean_name = self.fix_text(item.get('name', 'Article'))
+                            error_msgs.append(f'- {clean_name}: Disp: {int(stock_val)} | Req: {int(qty_needed)}')
+            if error_msgs:
+                self.notify('Stock Insuffisant pour le transfert', 'error')
+                if not self.dialog:
+                    txt = "Impossible d'effectuer le transfert.\nStock insuffisant dans la source (" + ('Magasin' if source_loc == 'store' else 'Dépôt') + ') :\n\n' + '\n'.join(error_msgs)
+                    self.dialog = MDDialog(title='Erreur de Stock', text=txt, buttons=[MDFlatButton(text='OK', on_release=lambda x: self.dialog.dismiss())])
+                    self.dialog.open()
+                return
         self.is_transaction_in_progress = True
         try:
             doc_type_map = {'sale': 'BV', 'purchase': 'BA', 'return_sale': 'RC', 'return_purchase': 'RF', 'transfer': 'TR', 'invoice_sale': 'FC', 'invoice_purchase': 'FF', 'proforma': 'FP', 'order_purchase': 'DP'}
@@ -4822,6 +4854,8 @@ class StockApp(MDApp):
 
             def on_fail(req, err):
                 self.is_transaction_in_progress = False
+                if self.current_mode == 'transfer' and hasattr(req, 'result'):
+                    pass
                 self.save_to_history(data, synced=False)
                 if excess_data:
                     self.save_to_history(excess_data, synced=False)
@@ -4861,6 +4895,16 @@ class StockApp(MDApp):
             if self.is_server_reachable:
 
                 def on_invoice_success(req, res):
+                    if res.get('status') == 'error':
+                        self.is_transaction_in_progress = False
+                        self.notify(f"Erreur Serveur: {res.get('message', '')}", 'error')
+                        if self.dialog:
+                            self.dialog.dismiss()
+                        from kivymd.uix.dialog import MDDialog
+                        from kivymd.uix.button import MDFlatButton
+                        self.dialog = MDDialog(title='Erreur Serveur', text=res.get('message', 'Erreur inconnue'), buttons=[MDFlatButton(text='OK', on_release=lambda x: self.dialog.dismiss())])
+                        self.dialog.open()
+                        return
                     if res.get('server_id'):
                         data['server_id'] = res.get('server_id')
                     if res.get('invoice_number'):
