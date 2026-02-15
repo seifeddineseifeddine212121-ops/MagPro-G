@@ -4099,8 +4099,45 @@ class StockApp(MDApp):
                 payload = {'action': 'update' if is_edit else 'add', 'id': product['id'] if is_edit else None, 'name': name_val, 'barcode': self.field_bar.text.strip(), 'description': self.field_reference.get_value().strip(), 'product_ref': self.field_num.text.strip(), 'category': fam_val, 'stock': stock_val, 'cost': sf(self.field_cost), 'price': sf(self.field_p1), 'price_semi': sf(self.field_p2), 'price_wholesale': sf(self.field_p3), 'image_path': current_image, 'user_name': self.current_user_name, 'unit': product.get('unit', '') if is_edit else '', 'tva': float(product.get('tva', 0) or 0) if is_edit else 0}
                 endpoint = '/api/update_product' if is_edit else '/api/add_product'
                 UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}{endpoint}', req_body=json.dumps(payload), req_headers={'Content-Type': 'application/json'}, method='POST', on_success=lambda r, s: [self.dialog.dismiss(), self.fetch_products(), self.notify('Succès', 'success')], on_failure=lambda r, e: self.notify('Erreur serveur', 'error'))
+            
+            def delete_product_action(x):
+                if not is_edit: return
+                
+                if has_movements:
+                    self.notify_error = MDDialog(
+                        title='Suppression Interdite',
+                        text="Ce produit a déjà été utilisé dans des opérations.\nIl est strictement impossible de le supprimer pour préserver l'historique.",
+                        buttons=[MDFlatButton(text='OK', on_release=lambda x: self.notify_error.dismiss())]
+                    )
+                    self.notify_error.open()
+                    return
+
+                def confirm_delete(y):
+                    if hasattr(self, 'del_confirm_dialog'): self.del_confirm_dialog.dismiss()
+                    payload = {'id': product['id']}
+                    UrlRequest(f'http://{self.active_server_ip}:{DEFAULT_PORT}/api/delete_product',
+                               req_body=json.dumps(payload),
+                               req_headers={'Content-Type': 'application/json'},
+                               method='POST',
+                               on_success=lambda r, s: [self.dialog.dismiss(), self.fetch_products(), self.notify('Produit supprimé', 'success')],
+                               on_failure=lambda r, e: self.notify('Erreur suppression', 'error'))
+
+                self.del_confirm_dialog = MDDialog(
+                    title='Confirmer suppression',
+                    text=f"Voulez-vous vraiment supprimer ce produit ?",
+                    buttons=[
+                        MDFlatButton(text='NON', on_release=lambda y: self.del_confirm_dialog.dismiss()),
+                        MDRaisedButton(text='OUI', md_bg_color=(0.8, 0, 0, 1), text_color=(1,1,1,1), on_release=confirm_delete)
+                    ]
+                )
+                self.del_confirm_dialog.open()
+
             footer = MDBoxLayout(orientation='vertical', spacing=dp(10), adaptive_height=True, padding=[0, dp(20), 0, 0])
             footer.add_widget(MDRaisedButton(text='ENREGISTRER', md_bg_color=(0, 0.7, 0, 1), size_hint_x=1, on_release=save_product_action))
+            
+            if is_edit:
+                footer.add_widget(MDRaisedButton(text='SUPPRIMER', md_bg_color=(0.8, 0, 0, 1), text_color=(1, 1, 1, 1), size_hint_x=1, on_release=delete_product_action))
+
             footer.add_widget(MDRaisedButton(text='FERMER', md_bg_color=(0.9, 0.9, 0.9, 1), text_color=(0.2, 0.2, 0.2, 1), size_hint_x=1, on_release=lambda x: self.dialog.dismiss()))
             main_box.add_widget(footer)
             scroll.add_widget(main_box)
